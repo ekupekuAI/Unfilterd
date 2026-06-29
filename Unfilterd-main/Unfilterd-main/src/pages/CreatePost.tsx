@@ -1,12 +1,21 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+=======
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import type { Mood } from '../types';
 import { MOOD_CONFIG } from '../types';
 import { PageContainer } from '../components/Layout';
+<<<<<<< HEAD
 import { Loader2, X, Sparkles, AlertTriangle, Save, ShieldAlert, ImagePlus, Upload, Trash2 } from 'lucide-react';
 import type { MediaType } from '../types';
+=======
+import { Loader2, X, Sparkles, AlertTriangle } from 'lucide-react';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
 const MOODS = Object.entries(MOOD_CONFIG) as [Mood, typeof MOOD_CONFIG[Mood]][];
 
@@ -42,6 +51,7 @@ function detectMood(text: string): Mood | null {
   return null;
 }
 
+<<<<<<< HEAD
 type DraftState = { title: string; content: string; mood: Mood };
 type ComposerMedia = {
   file?: File;
@@ -54,12 +64,18 @@ export function CreatePostPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+=======
+export function CreatePostPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   const [mood, setMood] = useState<Mood>('random');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toxicityWarning, setToxicityWarning] = useState(false);
   const [suggestedMood, setSuggestedMood] = useState<Mood | null>(null);
+<<<<<<< HEAD
   const [publishError, setPublishError] = useState('');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [crisisResources, setCrisisResources] = useState<string[]>([]);
@@ -130,10 +146,20 @@ export function CreatePostPage() {
   const handleContentChange = (text: string) => {
     setContent(text);
     updateMoodSignals(title + ' ' + text);
+=======
+
+  const handleContentChange = (text: string) => {
+    setContent(text);
+    const { isToxic } = detectToxicity(title + ' ' + text);
+    setToxicityWarning(isToxic);
+    const detected = detectMood(title + ' ' + text);
+    setSuggestedMood(detected);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   };
 
   const handleTitleChange = (text: string) => {
     setTitle(text);
+<<<<<<< HEAD
     updateMoodSignals(text + ' ' + content);
   };
 
@@ -187,10 +213,17 @@ export function CreatePostPage() {
     } finally {
       setUploadingMedia(false);
     }
+=======
+    const { isToxic } = detectToxicity(text + ' ' + content);
+    setToxicityWarning(isToxic);
+    const detected = detectMood(text + ' ' + content);
+    setSuggestedMood(detected);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   };
 
   const handlePublish = async () => {
     if (!user || !title.trim() || !content.trim()) return;
+<<<<<<< HEAD
     setPublishError('');
     setSubmitting(true);
     const payload = `${title.trim()} ${content.trim()}`;
@@ -240,6 +273,17 @@ export function CreatePostPage() {
       if (removed) URL.revokeObjectURL(removed.previewUrl);
       return next;
     });
+=======
+    setSubmitting(true);
+    const { data } = await supabase
+      .from('posts')
+      .insert({ user_id: user.id, mood, title: title.trim(), content: content.trim() })
+      .select('id')
+      .maybeSingle();
+
+    setSubmitting(false);
+    if (data) navigate(`/post/${data.id}`, { replace: true });
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   };
 
   const maxContent = 2000;
@@ -254,6 +298,7 @@ export function CreatePostPage() {
         </button>
       </div>
 
+<<<<<<< HEAD
       <input
         ref={fileInputRef}
         type="file"
@@ -263,6 +308,8 @@ export function CreatePostPage() {
         onChange={e => e.target.files && addFiles(e.target.files)}
       />
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">How are you feeling?</label>
@@ -272,7 +319,13 @@ export function CreatePostPage() {
                 key={key}
                 onClick={() => setMood(key)}
                 className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+<<<<<<< HEAD
                   mood === key ? `${config.bg} ${config.color} ring-1 ring-current` : 'bg-surface-50 text-gray-400 hover:text-white hover:bg-surface-200/50'
+=======
+                  mood === key
+                    ? `${config.bg} ${config.color} ring-1 ring-current`
+                    : 'bg-surface-50 text-gray-400 hover:text-white hover:bg-surface-200/50'
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
                 }`}
               >
                 {config.label}
@@ -290,6 +343,7 @@ export function CreatePostPage() {
           )}
         </div>
 
+<<<<<<< HEAD
         <div
           onDragOver={e => { e.preventDefault(); setDropActive(true); }}
           onDragLeave={() => setDropActive(false)}
@@ -342,6 +396,8 @@ export function CreatePostPage() {
           )}
         </div>
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1.5">Title</label>
           <input
@@ -367,6 +423,7 @@ export function CreatePostPage() {
           <p className="text-xs text-gray-600 mt-1 text-right">{content.length}/{maxContent}</p>
         </div>
 
+<<<<<<< HEAD
         {crisisResources.length > 0 && (
           <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20">
             <ShieldAlert className="w-5 h-5 text-primary shrink-0 mt-0.5" />
@@ -377,6 +434,8 @@ export function CreatePostPage() {
           </div>
         )}
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         {toxicityWarning && (
           <div className="flex items-start gap-3 p-4 rounded-xl bg-warning/10 border border-warning/20">
             <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
@@ -389,6 +448,7 @@ export function CreatePostPage() {
           </div>
         )}
 
+<<<<<<< HEAD
         {publishError && (
           <div className="rounded-xl bg-danger/10 border border-danger/20 px-4 py-3">
             <p className="text-sm text-danger-50">{publishError}</p>
@@ -412,6 +472,15 @@ export function CreatePostPage() {
           {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
           {uploadingMedia && <Loader2 className="w-4 h-4 animate-spin" />}
           {editingPostId ? 'Update Post' : 'Publish Anonymously'}
+=======
+        <button
+          onClick={handlePublish}
+          disabled={submitting || !title.trim() || !content.trim()}
+          className="w-full py-3.5 bg-primary hover:bg-primary-200 disabled:opacity-40 disabled:hover:bg-primary rounded-xl text-white font-semibold transition-colors flex items-center justify-center gap-2"
+        >
+          {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+          Publish Anonymously
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         </button>
       </div>
     </PageContainer>

@@ -35,6 +35,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+<<<<<<< HEAD
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'is_suspended') THEN
     ALTER TABLE profiles ADD COLUMN is_suspended boolean NOT NULL DEFAULT false;
@@ -47,6 +48,8 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 -- Add saves_count to posts
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'posts' AND column_name = 'saves_count') THEN
@@ -64,8 +67,11 @@ CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
 CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+<<<<<<< HEAD
 CREATE INDEX IF NOT EXISTS idx_comment_likes_user_id ON comment_likes(user_id);
 CREATE INDEX IF NOT EXISTS idx_comment_likes_comment_id ON comment_likes(comment_id);
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
 -- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -84,6 +90,7 @@ BEGIN
 END;
 $$;
 
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION public.notify_on_follow()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -103,6 +110,8 @@ CREATE TRIGGER on_follow_created
   AFTER INSERT ON follows
   FOR EACH ROW EXECUTE FUNCTION public.notify_on_follow();
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
@@ -120,6 +129,7 @@ CREATE POLICY "insert_own_profile" ON profiles FOR INSERT TO authenticated WITH 
 DROP POLICY IF EXISTS "update_own_profile" ON profiles;
 CREATE POLICY "update_own_profile" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "admin_update_profiles" ON profiles;
 CREATE POLICY "admin_update_profiles" ON profiles FOR UPDATE TO authenticated USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
@@ -127,6 +137,8 @@ CREATE POLICY "admin_update_profiles" ON profiles FOR UPDATE TO authenticated US
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 -- Follows policies
 DROP POLICY IF EXISTS "select_follows" ON follows;
 CREATE POLICY "select_follows" ON follows FOR SELECT TO authenticated USING (true);

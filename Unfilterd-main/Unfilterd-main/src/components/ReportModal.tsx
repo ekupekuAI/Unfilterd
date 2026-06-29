@@ -27,11 +27,17 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+<<<<<<< HEAD
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
     if (!user) return;
     setError('');
+=======
+
+  const handleSubmit = async () => {
+    if (!user) return;
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     setSubmitting(true);
     const insert: Record<string, unknown> = {
       reporter_id: user.id,
@@ -41,6 +47,7 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
     if (targetType === 'post') insert.post_id = targetId;
     else insert.comment_id = targetId;
 
+<<<<<<< HEAD
     const { error: insertError } = await supabase.from('reports').insert(insert);
     setSubmitting(false);
 
@@ -49,6 +56,10 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
       return;
     }
 
+=======
+    await supabase.from('reports').insert(insert);
+    setSubmitting(false);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     setSubmitted(true);
   };
 
@@ -56,7 +67,10 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
     setReason('spam');
     setDescription('');
     setSubmitted(false);
+<<<<<<< HEAD
     setError('');
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     onClose();
   };
 
@@ -97,9 +111,12 @@ export function ReportModal({ isOpen, onClose, targetType, targetId }: ReportMod
             placeholder="Additional details (optional)"
             className="w-full bg-surface-50 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-500 border border-white/5 focus:border-primary focus:outline-none resize-none h-20"
           />
+<<<<<<< HEAD
           {error && (
             <p className="text-xs text-danger-50">{error}</p>
           )}
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
           <button
             onClick={handleSubmit}
             disabled={submitting}

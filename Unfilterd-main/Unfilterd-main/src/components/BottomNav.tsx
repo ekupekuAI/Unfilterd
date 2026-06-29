@@ -1,14 +1,22 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { Home, Search, PlusSquare, Bell, User, Compass, Users } from 'lucide-react';
+=======
+import { Home, Search, PlusSquare, Bell, User } from 'lucide-react';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 import { useAuth } from '../hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Home' },
+<<<<<<< HEAD
   { path: '/explore', icon: Compass, label: 'Explore' },
   { path: '/search', icon: Search, label: 'Search' },
   { path: '/communities', icon: Users, label: 'Communities' },
+=======
+  { path: '/search', icon: Search, label: 'Search' },
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   { path: '/create', icon: PlusSquare, label: 'Post' },
   { path: '/notifications', icon: Bell, label: 'Alerts' },
   { path: '/profile', icon: User, label: 'Profile' },
@@ -28,7 +36,11 @@ export function BottomNav() {
       .eq('user_id', user.id)
       .eq('read', false)
       .then(({ count }) => setUnread(count ?? 0));
+<<<<<<< HEAD
   }, [user]);
+=======
+  }, [user, location.pathname]);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/90 backdrop-blur-lg border-t border-white/5 md:hidden">

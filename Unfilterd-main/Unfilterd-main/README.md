@@ -1,6 +1,7 @@
 # Unfilterd
 
 [![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-bxaw6ye6)
+<<<<<<< HEAD
 
 ## Production Notes
 
@@ -31,3 +32,5 @@ Set these variables in `.env.local`:
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6

@@ -4,15 +4,25 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+<<<<<<< HEAD
     "dev": "node --preserve-symlinks node_modules/vite/bin/vite.js",
     "build": "node --preserve-symlinks node_modules/vite/bin/vite.js build",
     "lint": "eslint .",
     "preview": "node --preserve-symlinks node_modules/vite/bin/vite.js preview",
+=======
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
+<<<<<<< HEAD
     "framer-motion": "^12.42.0",
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -22,9 +32,14 @@
     "@eslint/js": "^9.9.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+<<<<<<< HEAD
     "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.4.18",
     "esbuild-wasm": "^0.27.7",
+=======
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.18",
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
@@ -33,6 +48,10 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
+<<<<<<< HEAD
     "vite": "^7.3.5"
+=======
+    "vite": "^5.4.2"
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   }
 }

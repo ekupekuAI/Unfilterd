@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
+<<<<<<< HEAD
 import { useTheme } from '../hooks/useTheme';
 import { supabase } from '../lib/supabase';
 import type { Post, Comment } from '../types';
@@ -23,10 +24,28 @@ export function ProfilePage() {
   const [tab, setTab] = useState<ProfileTab>('posts');
   const [posts, setPosts] = useState<Post[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
+=======
+import { supabase } from '../lib/supabase';
+import type { Post } from '../types';
+import { Avatar } from '../components/Avatar';
+import { PostCard } from '../components/PostCard';
+import { MoodBadge } from '../components/MoodBadge';
+import { PageContainer, PageHeader, EmptyState, LoadingSpinner } from '../components/Layout';
+import { PenLine, Bookmark, Heart, Settings, LogOut, Calendar, Hash } from 'lucide-react';
+
+type ProfileTab = 'posts' | 'saved' | 'liked' | 'settings';
+
+export function ProfilePage() {
+  const { user, profile, signOut, refreshProfile } = useAuth();
+  const [tab, setTab] = useState<ProfileTab>('posts');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   const [editUsername, setEditUsername] = useState(false);
   const [username, setUsername] = useState(profile?.username ?? '');
   const [editBio, setEditBio] = useState(false);
   const [bio, setBio] = useState(profile?.bio ?? '');
+<<<<<<< HEAD
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [notificationSettings, setNotificationSettings] = useState({
@@ -51,6 +70,12 @@ export function ProfilePage() {
     created_at: user?.created_at ?? new Date().toISOString(),
     updated_at: user?.created_at ?? new Date().toISOString(),
   };
+=======
+
+  useEffect(() => {
+    refreshProfile();
+  }, []);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
   useEffect(() => {
     if (profile) {
@@ -59,6 +84,7 @@ export function ProfilePage() {
     }
   }, [profile]);
 
+<<<<<<< HEAD
   useEffect(() => {
     const key = `unfilterd:profile-settings:${user?.id ?? 'guest'}`;
     try {
@@ -75,6 +101,11 @@ export function ProfilePage() {
   const fetchPosts = useCallback(async () => {
     if (!user) return;
     setContentLoading(true);
+=======
+  const fetchPosts = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     let data: Post[] = [];
 
     if (tab === 'posts') {
@@ -90,17 +121,22 @@ export function ProfilePage() {
         .select('post_id, posts(*, profiles(username, avatar_seed))')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+<<<<<<< HEAD
       data = ((res.data ?? []) as JoinedPostRow[])
         .flatMap(row => {
           const post = extractJoinedPost(row);
           return post ? [{ ...post, is_saved: true }] : [];
         });
+=======
+      data = (res.data ?? []).map((s: any) => ({ ...s.posts, is_saved: true })) as Post[];
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     } else if (tab === 'liked') {
       const res = await supabase
         .from('likes')
         .select('post_id, posts(*, profiles(username, avatar_seed))')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+<<<<<<< HEAD
       data = ((res.data ?? []) as JoinedPostRow[])
         .flatMap(row => {
           const post = extractJoinedPost(row);
@@ -115,10 +151,14 @@ export function ProfilePage() {
         .order('created_at', { ascending: false });
       data = ((res.data ?? []) as Array<Comment & { posts?: Post }>)
         .flatMap(row => row.posts ? [row.posts] : []);
+=======
+      data = (res.data ?? []).map((l: any) => ({ ...l.posts, is_liked: true })) as Post[];
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     }
 
     if (user && data.length > 0 && tab === 'posts') {
       const postIds = data.map(p => p.id);
+<<<<<<< HEAD
       const [likesRes, savesRes] = await Promise.all([
         supabase
           .from('likes')
@@ -133,6 +173,20 @@ export function ProfilePage() {
       ]);
       const likedIds = new Set((likesRes.data ?? []).map(l => l.post_id));
       const savedIds = new Set((savesRes.data ?? []).map(s => s.post_id));
+=======
+      const { data: likes } = await supabase
+        .from('likes')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .in('post_id', postIds);
+      const { data: saves } = await supabase
+        .from('saved_posts')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .in('post_id', postIds);
+      const likedIds = new Set((likes ?? []).map(l => l.post_id));
+      const savedIds = new Set((saves ?? []).map(s => s.post_id));
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       data = data.map(p => ({
         ...p,
         is_liked: likedIds.has(p.id),
@@ -141,7 +195,11 @@ export function ProfilePage() {
     }
 
     setPosts(data);
+<<<<<<< HEAD
     setContentLoading(false);
+=======
+    setLoading(false);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   }, [tab, user]);
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
@@ -162,6 +220,7 @@ export function ProfilePage() {
     setEditBio(false);
   };
 
+<<<<<<< HEAD
   const handleChangePassword = async () => {
     if (newPassword.length < 8) return;
     await supabase.auth.updateUser({ password: newPassword });
@@ -193,19 +252,29 @@ export function ProfilePage() {
   };
 
   if (!user) return <PageContainer><LoadingSpinner /></PageContainer>;
+=======
+  if (!user || !profile) return <PageContainer><LoadingSpinner /></PageContainer>;
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
   const tabs: { key: ProfileTab; label: string; icon: React.ElementType }[] = [
     { key: 'posts', label: 'Posts', icon: PenLine },
     { key: 'saved', label: 'Saved', icon: Bookmark },
     { key: 'liked', label: 'Liked', icon: Heart },
+<<<<<<< HEAD
     { key: 'replies', label: 'Replies', icon: CornerDownRight },
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     { key: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
     <PageContainer>
       <div className="flex items-start gap-4 mb-6">
+<<<<<<< HEAD
         <Avatar seed={effectiveProfile.avatar_seed} size="xl" />
+=======
+        <Avatar seed={profile.avatar_seed} size="xl" />
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         <div className="flex-1 min-w-0">
           {editUsername ? (
             <div className="flex items-center gap-2">
@@ -223,6 +292,7 @@ export function ProfilePage() {
               onClick={() => setEditUsername(true)}
               className="text-lg font-semibold text-white hover:text-primary-50 transition-colors"
             >
+<<<<<<< HEAD
               {effectiveProfile.username}
             </button>
           )}
@@ -230,6 +300,15 @@ export function ProfilePage() {
             <span className="flex items-center gap-1"><Hash className="w-3.5 h-3.5" />{effectiveProfile.posts_count} posts</span>
             <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" />{effectiveProfile.likes_received_count} likes</span>
             <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(effectiveProfile.created_at).toLocaleDateString()}</span>
+=======
+              {profile.username}
+            </button>
+          )}
+          <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
+            <span className="flex items-center gap-1"><Hash className="w-3.5 h-3.5" />{profile.posts_count} posts</span>
+            <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" />{profile.likes_received_count} likes</span>
+            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(profile.created_at).toLocaleDateString()}</span>
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
           </div>
         </div>
       </div>
@@ -245,7 +324,11 @@ export function ProfilePage() {
             autoFocus
           />
           <div className="flex justify-end gap-2 mt-2">
+<<<<<<< HEAD
             <button onClick={() => { setEditBio(false); setBio(effectiveProfile.bio); }} className="text-xs text-gray-500">Cancel</button>
+=======
+            <button onClick={() => { setEditBio(false); setBio(profile.bio); }} className="text-xs text-gray-500">Cancel</button>
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
             <button onClick={handleUpdateBio} className="text-xs text-primary hover:text-primary-50">Save</button>
           </div>
         </div>
@@ -254,7 +337,11 @@ export function ProfilePage() {
           onClick={() => setEditBio(true)}
           className="block mb-6 text-sm text-gray-400 hover:text-gray-300 transition-colors"
         >
+<<<<<<< HEAD
           {effectiveProfile.bio || 'Add a bio...'}
+=======
+          {profile.bio || 'Add a bio...'}
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         </button>
       )}
 
@@ -278,6 +365,7 @@ export function ProfilePage() {
           <div className="bg-surface rounded-2xl p-5">
             <h3 className="text-sm font-medium text-white mb-3">Account</h3>
             <p className="text-sm text-gray-400 mb-1">Email: {user.email}</p>
+<<<<<<< HEAD
             <p className="text-sm text-gray-400">Joined: {new Date(effectiveProfile.created_at).toLocaleDateString()}</p>
           </div>
           <div className="bg-surface rounded-2xl p-5 space-y-3">
@@ -323,6 +411,9 @@ export function ProfilePage() {
             <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2"><Trash2 className="w-4 h-4" /> Delete account</h3>
             <p className="text-xs text-gray-400 mb-3">This removes your posts, likes, comments, saves, reports, and profile from the app.</p>
             <button onClick={handleDeleteAccount} className="px-4 py-2 rounded-lg bg-danger text-white text-sm">Delete account</button>
+=======
+            <p className="text-sm text-gray-400">Joined: {new Date(profile.created_at).toLocaleDateString()}</p>
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
           </div>
           <button
             onClick={signOut}
@@ -331,7 +422,11 @@ export function ProfilePage() {
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
         </div>
+<<<<<<< HEAD
       ) : contentLoading ? (
+=======
+      ) : loading ? (
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         <LoadingSpinner />
       ) : posts.length === 0 ? (
         <EmptyState

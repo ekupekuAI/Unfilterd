@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 /* eslint-disable react-refresh/only-export-components */
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types';
@@ -12,7 +15,11 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
+<<<<<<< HEAD
   signUp: (email: string, password: string, username: string) => Promise<{ error: string | null; needsEmailConfirmation: boolean }>;
+=======
+  signUp: (email: string, password: string, username: string) => Promise<{ error: string | null }>;
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -38,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data as Profile | null;
   }, []);
 
+<<<<<<< HEAD
   const ensureProfile = useCallback(async (user: User) => {
     const profile = await fetchProfile(user.id);
     if (profile) return profile;
@@ -95,11 +103,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setState({ user: null, profile: null, session: null, loading: false });
           }
         } catch {
+=======
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await fetchProfile(session.user.id);
+        setState({ user: session.user, profile, session, loading: false });
+      } else {
+        setState({ user: null, profile: null, session: null, loading: false });
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id);
+          setState({ user: session.user, profile, session, loading: false });
+        } else {
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
           setState({ user: null, profile: null, session: null, loading: false });
         }
       }
     );
 
+<<<<<<< HEAD
     return () => {
       mounted = false;
       subscription.unsubscribe();
@@ -108,14 +135,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, username: string) => {
     const { data, error } = await supabase.auth.signUp({
+=======
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
+
+  const signUp = async (email: string, password: string, username: string) => {
+    const { error } = await supabase.auth.signUp({
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       email,
       password,
       options: {
         data: { username },
       },
     });
+<<<<<<< HEAD
     if (error) return { error: error.message, needsEmailConfirmation: false };
     return { error: null, needsEmailConfirmation: !data.session };
+=======
+    if (error) return { error: error.message };
+    return { error: null };
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   };
 
   const signIn = async (email: string, password: string) => {
@@ -131,7 +170,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async () => {
     if (state.user) {
+<<<<<<< HEAD
       const profile = await ensureProfile(state.user);
+=======
+      const profile = await fetchProfile(state.user.id);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       setState(prev => ({ ...prev, profile }));
     }
   };

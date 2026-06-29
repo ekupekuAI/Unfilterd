@@ -1,15 +1,24 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Avatar } from './Avatar';
+<<<<<<< HEAD
 import { Bell, Search, SunMoon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../hooks/useTheme';
+=======
+import { Bell, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
 export function TopNav() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+<<<<<<< HEAD
   const { theme, toggleTheme } = useTheme();
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -49,6 +58,7 @@ export function TopNav() {
             )}
           </button>
           <button
+<<<<<<< HEAD
             onClick={toggleTheme}
             className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
@@ -56,6 +66,8 @@ export function TopNav() {
             <SunMoon className="w-5 h-5" />
           </button>
           <button
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
             onClick={() => navigate('/profile')}
             className="ml-1"
           >

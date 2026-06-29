@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import type { Report } from '../types';
 import { PageContainer, PageHeader, EmptyState, LoadingSpinner } from '../components/Layout';
+<<<<<<< HEAD
 import { Shield, Users, FileText, AlertTriangle, CheckCircle, XCircle, Eye, Trash2, MessageSquareWarning } from 'lucide-react';
 
 type RecentUser = {
@@ -58,11 +59,30 @@ export function AdminPage() {
       return;
     }
 
+=======
+import { Shield, Users, FileText, AlertTriangle, CheckCircle, XCircle, Eye } from 'lucide-react';
+
+export function AdminPage() {
+  const { profile } = useAuth();
+  const [stats, setStats] = useState({ users: 0, posts: 0, reports: 0, active: 0 });
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'overview' | 'reports'>('overview');
+
+  const fetchData = useCallback(async () => {
+    const [usersRes, postsRes, reportsRes] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('posts').select('id', { count: 'exact', head: true }),
+      supabase.from('reports').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
+    ]);
+
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     setStats({
       users: usersRes.count ?? 0,
       posts: postsRes.count ?? 0,
       reports: reportsRes.data?.length ?? 0,
       active: usersRes.count ?? 0,
+<<<<<<< HEAD
       communities: communitiesRes.count ?? 0,
       comments: commentsRes.count ?? 0,
       dailyActive: dailyRes.count ?? 0,
@@ -91,6 +111,14 @@ export function AdminPage() {
     }
     fetchData();
   }, [fetchData, profile]);
+=======
+    });
+    setReports((reportsRes.data ?? []) as Report[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
   if (!profile?.is_admin) {
     return (
@@ -105,6 +133,7 @@ export function AdminPage() {
   }
 
   const handleReport = async (id: string, status: 'resolved' | 'dismissed') => {
+<<<<<<< HEAD
     const { error: updateError } = await supabase
       .from('reports')
       .update({ status, admin_response: `Report ${status}` })
@@ -157,6 +186,11 @@ export function AdminPage() {
       reason: 'Moderator warning',
     });
     if (insertError) setError(insertError.message);
+=======
+    await supabase.from('reports').update({ status, admin_response: `Report ${status}` }).eq('id', id);
+    setReports(prev => prev.filter(r => r.id !== id));
+    setStats(s => ({ ...s, reports: s.reports - 1 }));
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   };
 
   const statCards = [
@@ -164,8 +198,11 @@ export function AdminPage() {
     { label: 'Total Posts', value: stats.posts, icon: FileText, color: 'text-secondary' },
     { label: 'Pending Reports', value: stats.reports, icon: AlertTriangle, color: 'text-warning' },
     { label: 'Active Users', value: stats.active, icon: Eye, color: 'text-success' },
+<<<<<<< HEAD
     { label: 'Communities', value: stats.communities, icon: Shield, color: 'text-primary' },
     { label: 'Comments', value: stats.comments, icon: MessageSquareWarning, color: 'text-secondary' },
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   ];
 
   if (loading) return <PageContainer><LoadingSpinner /></PageContainer>;
@@ -193,6 +230,7 @@ export function AdminPage() {
         </button>
       </div>
 
+<<<<<<< HEAD
       {error && (
         <div className="mb-4 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3">
           <p className="text-sm text-danger-50">{error}</p>
@@ -273,6 +311,19 @@ export function AdminPage() {
               ))}
             </div>
           </div>
+=======
+      {tab === 'overview' ? (
+        <div className="grid grid-cols-2 gap-3">
+          {statCards.map(s => (
+            <div key={s.label} className="bg-surface rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <s.icon className={`w-4 h-4 ${s.color}`} />
+                <span className="text-xs text-gray-400">{s.label}</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{s.value}</p>
+            </div>
+          ))}
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         </div>
       ) : reports.length === 0 ? (
         <EmptyState icon={CheckCircle} title="All clear!" description="No pending reports to review" />
@@ -298,6 +349,7 @@ export function AdminPage() {
                     <CheckCircle className="w-4 h-4" />
                   </button>
                   <button
+<<<<<<< HEAD
                     onClick={() => handleDeletePost(r.post_id ?? '')}
                     disabled={!r.post_id}
                     className="p-2 rounded-lg bg-danger/20 text-danger hover:bg-danger/30 disabled:opacity-40 transition-colors"
@@ -306,6 +358,8 @@ export function AdminPage() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                   <button
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
                     onClick={() => handleReport(r.id, 'dismissed')}
                     className="p-2 rounded-lg bg-surface-200 text-gray-400 hover:bg-danger/20 hover:text-danger transition-colors"
                     title="Dismiss"

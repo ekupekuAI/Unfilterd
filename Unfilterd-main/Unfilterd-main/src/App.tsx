@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -6,10 +7,17 @@ import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { ForgotPasswordPage } from './pages/ForgotPassword';
 import { ResetPasswordPage } from './pages/ResetPassword';
+=======
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { LoginPage } from './pages/Login';
+import { RegisterPage } from './pages/Register';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 import { HomeFeedPage } from './pages/HomeFeed';
 import { CreatePostPage } from './pages/CreatePost';
 import { PostDetailPage } from './pages/PostDetail';
 import { ProfilePage } from './pages/Profile';
+<<<<<<< HEAD
 import { UserProfilePage } from './pages/UserProfile';
 import { SearchPage } from './pages/Search';
 import { ExplorePage } from './pages/Explore';
@@ -40,6 +48,19 @@ function ProtectedRoute() {
       />
     );
   }
+=======
+import { SearchPage } from './pages/Search';
+import { NotificationsPage } from './pages/Notifications';
+import { AdminPage } from './pages/Admin';
+import { BottomNav } from './components/BottomNav';
+import { TopNav } from './components/TopNav';
+import { LoadingSpinner } from './components/Layout';
+
+function ProtectedRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSpinner className="min-h-screen" />;
+  if (!user) return <Navigate to="/login" replace />;
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   return (
     <>
       <TopNav />
@@ -49,6 +70,7 @@ function ProtectedRoute() {
   );
 }
 
+<<<<<<< HEAD
 function ShortcutLayer() {
   const navigate = useNavigate();
 
@@ -92,11 +114,21 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+=======
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomeFeedPage />} />
             <Route path="/create" element={<CreatePostPage />} />
             <Route path="/post/:id" element={<PostDetailPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+<<<<<<< HEAD
             <Route path="/profile/:id" element={<UserProfilePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/explore" element={<ExplorePage />} />
@@ -111,6 +143,15 @@ export default function App() {
         </AuthProvider>
         </ErrorBoundary>
       </ThemeProvider>
+=======
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     </BrowserRouter>
   );
 }

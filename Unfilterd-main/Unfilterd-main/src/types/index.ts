@@ -3,7 +3,10 @@ export type Mood = 'happy' | 'sad' | 'angry' | 'lonely' | 'relationship' | 'care
 export type ReportReason = 'spam' | 'harassment' | 'abuse' | 'hate_speech' | 'inappropriate' | 'other';
 
 export type NotificationType = 'like' | 'comment' | 'reply' | 'system';
+<<<<<<< HEAD
 export type MediaType = 'image' | 'gif' | 'video' | 'voice';
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
 export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
 
@@ -12,6 +15,7 @@ export interface Profile {
   username: string;
   display_name: string;
   avatar_seed: string;
+<<<<<<< HEAD
   avatar_url?: string;
   banner_url?: string;
   bio: string;
@@ -29,6 +33,12 @@ export interface Profile {
   mention_notifications?: boolean;
   privacy_private_profile?: boolean;
   privacy_allow_following?: boolean;
+=======
+  bio: string;
+  is_admin: boolean;
+  posts_count: number;
+  likes_received_count: number;
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +56,7 @@ export interface Post {
   created_at: string;
   updated_at: string | null;
   profiles?: Profile;
+<<<<<<< HEAD
   post_media?: PostMedia[];
   media?: PostMedia[];
   is_liked?: boolean;
@@ -62,6 +73,10 @@ export interface PostMedia {
   thumbnail_url?: string;
   sort_order: number;
   created_at: string;
+=======
+  is_liked?: boolean;
+  is_saved?: boolean;
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 }
 
 export interface Comment {
@@ -110,7 +125,10 @@ export interface Report {
   reporter_id: string;
   post_id: string | null;
   comment_id: string | null;
+<<<<<<< HEAD
   reported_user_id?: string | null;
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   reason: ReportReason;
   description: string;
   status: ReportStatus;
@@ -119,6 +137,7 @@ export interface Report {
   updated_at: string;
 }
 
+<<<<<<< HEAD
 export interface UserSettings {
   email_notifications: boolean;
   follow_notifications: boolean;
@@ -128,6 +147,8 @@ export interface UserSettings {
   private_profile: boolean;
 }
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 export interface Notification {
   id: string;
   user_id: string;
@@ -142,6 +163,7 @@ export interface Notification {
   actor_profile?: Profile;
 }
 
+<<<<<<< HEAD
 export interface Community {
   id: string;
   slug: string;
@@ -176,6 +198,8 @@ export interface CommunityPost {
   created_at: string;
 }
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 export const MOOD_CONFIG: Record<Mood, { label: string; color: string; bg: string }> = {
   happy: { label: 'Happy', color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
   sad: { label: 'Sad', color: 'text-blue-400', bg: 'bg-blue-500/20' },

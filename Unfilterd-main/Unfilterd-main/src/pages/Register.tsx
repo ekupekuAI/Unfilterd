@@ -38,13 +38,19 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+<<<<<<< HEAD
   const [successMessage, setSuccessMessage] = useState('');
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+<<<<<<< HEAD
     setSuccessMessage('');
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
     if (!username || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
@@ -64,18 +70,26 @@ export function RegisterPage() {
     }
 
     setLoading(true);
+<<<<<<< HEAD
     const { error, needsEmailConfirmation } = await signUp(email, password, username);
+=======
+    const { error } = await signUp(email, password, username);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     setLoading(false);
 
     if (error) {
       if (error.includes('already registered')) setError('This email is already registered');
       else setError(error);
     } else {
+<<<<<<< HEAD
       if (needsEmailConfirmation) {
         setSuccessMessage('Account created. Check your email to confirm your account before signing in.');
       } else {
         navigate('/');
       }
+=======
+      navigate('/');
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     }
   };
 
@@ -98,12 +112,15 @@ export function RegisterPage() {
             </div>
           )}
 
+<<<<<<< HEAD
           {successMessage && (
             <div className="mb-4 p-3 rounded-lg bg-success/10 border border-success/20 text-success-50 text-sm">
               {successMessage}
             </div>
           )}
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Username</label>

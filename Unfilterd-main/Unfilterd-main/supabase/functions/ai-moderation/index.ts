@@ -11,7 +11,10 @@ const TOXICITY_KEYWORDS = [
   "rape", "assault", "bomb", "terrorist", "shoot", "stab", "torture",
   "genocide", "ethnic cleansing", "mass shooting", "self-harm",
   "end my life", "end it all", "no reason to live",
+<<<<<<< HEAD
   "abuse", "harass", "harassment", "spam", "hate", "slur",
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 ];
 
 const MOOD_KEYWORDS: Record<string, string[]> = {
@@ -22,7 +25,10 @@ const MOOD_KEYWORDS: Record<string, string[]> = {
   relationship: ["relationship", "boyfriend", "girlfriend", "partner", "dating", "marriage", "divorce", "ex", "breakup", "cheated", "love", "crush", "heart", "together"],
   career: ["job", "work", "career", "boss", "fired", "promotion", "interview", "salary", "coworker", "toxic workplace", "layoff", "resignation", "hired", "workplace"],
   motivation: ["motivated", "hustle", "goals", "dream", "inspire", "grind", "never give up", "push through", "strong", "determined", "ambition", "drive", "perseverance"],
+<<<<<<< HEAD
   anxiety: ["anxious", "anxiety", "panic", "worried", "overthinking", "stressed", "stress", "nervous", "fear", "fearful", "burned out", "burnout", "restless"],
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   confession: ["confession", "secret", "guilty", "admit", "never told", "confess", "came clean", "regret", "i lied", "the truth is", "honestly", "unpopular opinion"],
 };
 
@@ -69,6 +75,7 @@ function detectToxicity(text: string): { isToxic: boolean; severity: "low" | "me
   };
 }
 
+<<<<<<< HEAD
 function detectCrisis(text: string): { isCrisis: boolean; resources: string[] } {
   const lower = text.toLowerCase();
   const crisisPatterns = [
@@ -86,6 +93,8 @@ function detectCrisis(text: string): { isCrisis: boolean; resources: string[] } 
   };
 }
 
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -103,10 +112,16 @@ Deno.serve(async (req: Request) => {
 
     const mood = detectMood(text);
     const toxicity = detectToxicity(text);
+<<<<<<< HEAD
     const crisis = detectCrisis(text);
 
     return new Response(
       JSON.stringify({ mood, toxicity, crisis }),
+=======
+
+    return new Response(
+      JSON.stringify({ mood, toxicity }),
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

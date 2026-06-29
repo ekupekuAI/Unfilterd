@@ -5,9 +5,14 @@ import { useAuth } from '../hooks/useAuth';
 import type { Post, Comment } from '../types';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
+<<<<<<< HEAD
 import { ReportModal } from '../components/ReportModal';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/Layout';
 import { MessageCircle, Send, CornerDownRight, Trash2, Flag, Heart, Pencil } from 'lucide-react';
+=======
+import { PageContainer, LoadingSpinner, EmptyState } from '../components/Layout';
+import { MessageCircle, Send, CornerDownRight, Trash2 } from 'lucide-react';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,21 +23,29 @@ export function PostDetailPage() {
   const [commentText, setCommentText] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+<<<<<<< HEAD
   const [commentError, setCommentError] = useState('');
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
   const fetchPost = useCallback(async () => {
     if (!id) return;
     const { data } = await supabase
       .from('posts')
+<<<<<<< HEAD
       .select('*, profiles(username, avatar_seed), post_media(*)')
+=======
+      .select('*, profiles(username, avatar_seed)')
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       .eq('id', id)
       .maybeSingle();
     setPost(data as Post | null);
 
     if (data && user) {
+<<<<<<< HEAD
       const [likeRes, saveRes] = await Promise.all([
         supabase
           .from('likes')
@@ -48,6 +61,21 @@ export function PostDetailPage() {
           .maybeSingle(),
       ]);
       setPost({ ...data, is_liked: !!likeRes.data, is_saved: !!saveRes.data } as Post);
+=======
+      const { data: like } = await supabase
+        .from('likes')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .eq('post_id', id)
+        .maybeSingle();
+      const { data: save } = await supabase
+        .from('saved_posts')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .eq('post_id', id)
+        .maybeSingle();
+      setPost({ ...data, is_liked: !!like, is_saved: !!save } as Post);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     }
     setLoading(false);
   }, [id, user]);
@@ -59,6 +87,7 @@ export function PostDetailPage() {
       .select('*, profiles(username, avatar_seed)')
       .eq('post_id', id)
       .order('created_at', { ascending: true });
+<<<<<<< HEAD
     const commentList = (data ?? []) as Comment[];
     if (!user || commentList.length === 0) {
       setComments(commentList);
@@ -74,19 +103,29 @@ export function PostDetailPage() {
     const likedIds = new Set((likedRows ?? []).map(row => row.comment_id));
     setComments(commentList.map(comment => ({ ...comment, is_liked: likedIds.has(comment.id) })));
   }, [id, user]);
+=======
+    setComments((data ?? []) as Comment[]);
+  }, [id]);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
   useEffect(() => { fetchPost(); fetchComments(); }, [fetchPost, fetchComments]);
 
   const handleSubmitComment = async () => {
     if (!user || !commentText.trim() || !id) return;
+<<<<<<< HEAD
     setCommentError('');
     setSubmitting(true);
     const { error } = await supabase.from('comments').insert({
+=======
+    setSubmitting(true);
+    await supabase.from('comments').insert({
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
       post_id: id,
       user_id: user.id,
       parent_comment_id: replyTo,
       content: commentText.trim(),
     });
+<<<<<<< HEAD
     setSubmitting(false);
 
     if (error) {
@@ -96,10 +135,16 @@ export function PostDetailPage() {
 
     setCommentText('');
     setReplyTo(null);
+=======
+    setCommentText('');
+    setReplyTo(null);
+    setSubmitting(false);
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     fetchComments();
   };
 
   const handleDeleteComment = async (commentId: string) => {
+<<<<<<< HEAD
     setCommentError('');
     const { error } = await supabase.from('comments').delete().eq('id', commentId);
     if (error) {
@@ -143,6 +188,12 @@ export function PostDetailPage() {
     }
   };
 
+=======
+    await supabase.from('comments').delete().eq('id', commentId);
+    fetchComments();
+  };
+
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
   const nestedComments = (comments: Comment[]) => {
     const map = new Map<string, Comment[]>();
     const roots: Comment[] = [];
@@ -179,6 +230,7 @@ export function PostDetailPage() {
               </span>
             </div>
             <p className="text-sm text-gray-300 mt-1 whitespace-pre-wrap">{comment.content}</p>
+<<<<<<< HEAD
             {editingCommentId === comment.id && (
               <div className="mt-2 space-y-2">
                 <textarea
@@ -193,6 +245,8 @@ export function PostDetailPage() {
                 </div>
               </div>
             )}
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
             <div className="flex items-center gap-4 mt-2">
               <button
                 onClick={() => setReplyTo(comment.id)}
@@ -200,6 +254,7 @@ export function PostDetailPage() {
               >
                 <CornerDownRight className="w-3 h-3" /> Reply
               </button>
+<<<<<<< HEAD
               <button
                 onClick={() => handleToggleCommentLike(comment.id, !comment.is_liked)}
                 className={`flex items-center gap-1 text-xs transition-colors ${
@@ -233,6 +288,16 @@ export function PostDetailPage() {
                   </button>
                 </>
               )}
+=======
+              {isOwn && (
+                <button
+                  onClick={() => handleDeleteComment(comment.id)}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-danger transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" /> Delete
+                </button>
+              )}
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
             </div>
           </div>
         </div>
@@ -276,9 +341,12 @@ export function PostDetailPage() {
               <Send className="w-4 h-4" />
             </button>
           </div>
+<<<<<<< HEAD
           {commentError && (
             <p className="mt-3 text-xs text-danger-50">{commentError}</p>
           )}
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
         </div>
 
         <div className="divide-y divide-white/5">
@@ -291,6 +359,7 @@ export function PostDetailPage() {
           <p className="text-center text-gray-500 text-sm py-8">No comments yet. Be the first to share your thoughts.</p>
         )}
       </div>
+<<<<<<< HEAD
 
       <ReportModal
         isOpen={!!reportCommentId}
@@ -298,6 +367,8 @@ export function PostDetailPage() {
         targetType="comment"
         targetId={reportCommentId ?? ''}
       />
+=======
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
     </PageContainer>
   );
 }

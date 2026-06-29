@@ -1,4 +1,8 @@
 import { useMemo } from 'react';
+<<<<<<< HEAD
+=======
+import { User } from 'lucide-react';
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
 
 interface AvatarProps {
   seed: string;
@@ -36,3 +40,14 @@ export function Avatar({ seed, size = 'md', className = '' }: AvatarProps) {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+export function AnonymousAvatar({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }) {
+  return (
+    <div className={`${sizeMap[size]} rounded-full bg-surface-50 flex items-center justify-center shrink-0 ${className}`}>
+      <User className="text-primary-50 w-1/2 h-1/2" />
+    </div>
+  );
+}
+>>>>>>> 3b30a91baa8571129fde41509d79604630ce5df6
