@@ -3,6 +3,7 @@ import { AuraBackground } from './AuraBackground';
 import { ParticleSystem } from './ParticleSystem';
 import { LogoReveal } from './LogoReveal';
 import { FeedTransition } from './FeedTransition';
+import { ReelIntro } from './ReelIntro';
 
 export function StartupAnimation({ active, phase }: { active: boolean; phase: string }) {
   return (
@@ -17,6 +18,7 @@ export function StartupAnimation({ active, phase }: { active: boolean; phase: st
         >
           <AuraBackground phase={phase} />
           <ParticleSystem phase={phase} />
+          <ReelIntro phase={phase} />
           <LogoReveal phase={phase} />
           <FeedTransition phase={phase} />
           <motion.div
