@@ -2,7 +2,53 @@ export type Mood = 'happy' | 'sad' | 'angry' | 'lonely' | 'relationship' | 'care
 
 export type ReportReason = 'spam' | 'harassment' | 'abuse' | 'hate_speech' | 'inappropriate' | 'other';
 
-export type NotificationType = 'like' | 'comment' | 'reply' | 'system';
+export type NotificationType = 'like' | 'comment' | 'reply' | 'system' | 'match' | 'message';
+
+export type VibeMatchStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+
+/** A pairing between two people whose posts share the same vibe. */
+export interface VibeMatch {
+  id: string;
+  /** The post that triggered the match. */
+  post_id: string;
+  /** The person whose post triggered the match. */
+  requester_id: string;
+  /** The person we found for them. Only this person can accept or decline. */
+  matched_user_id: string;
+  /** The matched person's post that shared the vibe. */
+  matched_post_id: string | null;
+  status: VibeMatchStatus;
+  shared_tags: string[];
+  conversation_id: string | null;
+  created_at: string;
+  responded_at: string | null;
+  requester?: Profile;
+  matched_user?: Profile;
+  post?: Post;
+  matched_post?: Post;
+}
+
+export interface Conversation {
+  id: string;
+  match_id: string | null;
+  user_a: string;
+  user_b: string;
+  created_at: string;
+  last_message_at: string;
+  profile_a?: Profile;
+  profile_b?: Profile;
+  last_message?: Message | null;
+  unread_count?: number;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  read_at: string | null;
+}
 export type MediaType = 'image' | 'gif' | 'video' | 'voice';
 
 export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
@@ -29,6 +75,8 @@ export interface Profile {
   mention_notifications?: boolean;
   privacy_private_profile?: boolean;
   privacy_allow_following?: boolean;
+  /** Whether this person wants to be paired with others feeling the same thing. */
+  open_to_matching?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +91,13 @@ export interface Post {
   comment_count: number;
   saves_count: number;
   is_flagged: boolean;
+  /** Vibe tags from `VIBE_TAGS` in src/lib/vibe.ts. */
+  vibe_tags?: string[];
+  /** 0-100. */
+  vibe_intensity?: number;
+  is_crisis?: boolean;
+  /** The author asked to be matched with someone feeling this too. */
+  wants_match?: boolean;
   created_at: string;
   updated_at: string | null;
   profiles?: Profile;
@@ -137,6 +192,8 @@ export interface Notification {
   comment_id: string | null;
   message: string;
   read: boolean;
+  /** In-app path to open, e.g. /matches or /chat/<id>. Empty when the type decides. */
+  link?: string;
   created_at: string;
   profiles?: Profile;
   actor_profile?: Profile;

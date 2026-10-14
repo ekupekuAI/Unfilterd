@@ -16,6 +16,8 @@ import { ExplorePage } from './pages/Explore';
 import { CommunitiesPage } from './pages/Communities';
 import { CommunityDetailPage } from './pages/CommunityDetail';
 import { NotificationsPage } from './pages/Notifications';
+import { MatchesPage } from './pages/Matches';
+import { ChatPage } from './pages/Chat';
 import { AdminPage } from './pages/Admin';
 import { AnalyticsPage } from './pages/Analytics';
 import { NotFoundPage } from './pages/NotFound';
@@ -103,6 +105,8 @@ export default function App() {
             <Route path="/communities" element={<CommunitiesPage />} />
             <Route path="/communities/:id" element={<CommunityDetailPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/matches" element={<MatchesPage />} />
+            <Route path="/chat/:id" element={<ChatPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
           </Route>

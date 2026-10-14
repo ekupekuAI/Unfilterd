@@ -4,13 +4,15 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import type { Notification } from '../types';
 import { PageContainer, EmptyState, LoadingSpinner } from '../components/Layout';
-import { Bell, Heart, MessageCircle, CornerDownRight, Megaphone, Check } from 'lucide-react';
+import { Bell, Heart, MessageCircle, CornerDownRight, Megaphone, Check, HeartHandshake, MessagesSquare } from 'lucide-react';
 
 const typeConfig = {
   like: { icon: Heart, color: 'text-red-400', bg: 'bg-red-500/20' },
   comment: { icon: MessageCircle, color: 'text-secondary', bg: 'bg-secondary/20' },
   reply: { icon: CornerDownRight, color: 'text-primary-50', bg: 'bg-primary/20' },
   system: { icon: Megaphone, color: 'text-warning', bg: 'bg-warning/20' },
+  match: { icon: HeartHandshake, color: 'text-secondary', bg: 'bg-secondary/20' },
+  message: { icon: MessagesSquare, color: 'text-primary-50', bg: 'bg-primary/20' },
 };
 const fallbackNotificationType = typeConfig.system;
 
@@ -92,7 +94,7 @@ export function NotificationsPage() {
       </div>
 
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-        {(['all', 'unread', 'like', 'comment', 'reply', 'system'] as const).map(item => (
+        {(['all', 'unread', 'match', 'message', 'like', 'comment', 'reply', 'system'] as const).map(item => (
           <button
             key={item}
             onClick={() => setFilter(item)}
@@ -137,9 +139,9 @@ export function NotificationsPage() {
                     {new Date(n.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                {n.post_id && (
+                {(n.link || n.post_id) && (
                   <Link
-                    to={`/post/${n.post_id}`}
+                    to={n.link || `/post/${n.post_id}`}
                     className="text-xs text-primary hover:text-primary-50 shrink-0"
                   >
                     View

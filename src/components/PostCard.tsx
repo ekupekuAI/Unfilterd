@@ -7,6 +7,7 @@ import { MoodBadge } from './MoodBadge';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { ReportModal } from './ReportModal';
+import { tagLabel } from '../lib/vibe';
 
 interface PostCardProps {
   post: Post;
@@ -155,6 +156,13 @@ export function PostCard({ post, onLikeToggle, onSaveToggle, onDeleted, compact 
               <MoodBadge mood={post.mood} size="sm" />
               <span className="text-xs text-gray-500">{timeAgo(post.created_at)}</span>
             </div>
+            {post.vibe_tags && post.vibe_tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {post.vibe_tags.slice(0, 3).map(tag => (
+                  <span key={tag} className="px-1.5 py-0.5 rounded-md text-[11px] text-primary-50 bg-primary/10">#{tagLabel(tag)}</span>
+                ))}
+              </div>
+            )}
             <Link to={`/post/${post.id}`} className="block mt-2 group">
               <h3 className="font-semibold text-white group-hover:text-primary-50 transition-colors">
                 {post.title}

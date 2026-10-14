@@ -5,7 +5,8 @@ import { supabase } from '../lib/supabase';
 import type { Mood } from '../types';
 import { MOOD_CONFIG } from '../types';
 import { PageContainer } from '../components/Layout';
-import { Loader2, X, Sparkles, AlertTriangle, Save, ShieldAlert, ImagePlus, Upload, Trash2 } from 'lucide-react';
+import { Loader2, X, Sparkles, AlertTriangle, Save, ShieldAlert, ImagePlus, Upload, Trash2, HeartHandshake } from 'lucide-react';
+import { analyzeVibe, VIBE_TAGS, VIBE_TAG_LABELS, type VibeAnalysis, type VibeTag } from '../lib/vibe';
 import type { MediaType } from '../types';
 
 const MOODS = Object.entries(MOOD_CONFIG) as [Mood, typeof MOOD_CONFIG[Mood]][];
@@ -51,9 +52,15 @@ type ComposerMedia = {
 };
 
 export function CreatePostPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [vibe, setVibe] = useState<VibeAnalysis | null>(null);
+  const [vibeText, setVibeText] = useState('');
+  const [vibeTags, setVibeTags] = useState<VibeTag[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [wantsMatch, setWantsMatch] = useState(true);
+  const [showAllTags, setShowAllTags] = useState(false);
   const [mood, setMood] = useState<Mood>('random');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -189,17 +196,40 @@ export function CreatePostPage() {
     }
   };
 
+  const currentText = `${title.trim()} ${content.trim()}`.trim();
+
+  const readVibe = async (): Promise<VibeAnalysis> => {
+    if (vibe && vibeText === currentText) return vibe;
+    setAnalyzing(true);
+    const result = await analyzeVibe(currentText);
+    setAnalyzing(false);
+    setVibe(result);
+    setVibeText(currentText);
+    setVibeTags(result.vibe_tags);
+    if (result.mood !== 'random') setMood(result.mood);
+    setCrisisResources(result.crisis_resources);
+    return result;
+  };
+
+  const toggleTag = (tag: VibeTag) => {
+    setVibeTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag].slice(0, 5));
+  };
+
   const handlePublish = async () => {
     if (!user || !title.trim() || !content.trim()) return;
     setPublishError('');
     setSubmitting(true);
-    const payload = `${title.trim()} ${content.trim()}`;
-    const { data: aiData } = await supabase.functions.invoke('ai-moderation', { body: { text: payload } });
-    const aiMood = aiData?.mood?.[0]?.mood as Mood | undefined;
-    const aiSeverity = aiData?.toxicity?.severity as 'low' | 'medium' | 'high' | undefined;
-    const crisis = aiData?.crisis as { isCrisis?: boolean; resources?: string[] } | undefined;
-    if (aiMood && aiMood !== 'random') setMood(aiMood);
-    if (crisis?.isCrisis) setCrisisResources(crisis.resources ?? []);
+    const analysis = await readVibe();
+    const aiSeverity = analysis.toxicity.isToxic ? analysis.toxicity.severity : undefined;
+    const tags = vibeTags.length ? vibeTags : analysis.vibe_tags;
+    const finalMood = mood === 'random' && analysis.mood !== 'random' ? analysis.mood : mood;
+    const matchRequested = wantsMatch && !analysis.is_crisis && profile?.open_to_matching !== false;
+    const vibeFields = {
+      vibe_tags: tags,
+      vibe_intensity: analysis.intensity,
+      is_crisis: analysis.is_crisis,
+      wants_match: matchRequested,
+    };
     if (aiSeverity === 'high' && !showHighSeverityConfirm) {
       setSubmitting(false);
       setPublishError('This post appears highly harmful. Please review before publishing.');
@@ -212,8 +242,8 @@ export function CreatePostPage() {
       return;
     }
     const request = editingPostId
-      ? supabase.from('posts').update({ mood, title: title.trim(), content: content.trim() }).eq('id', editingPostId).select('id').maybeSingle()
-      : supabase.from('posts').insert({ user_id: user.id, mood, title: title.trim(), content: content.trim() }).select('id').maybeSingle();
+      ? supabase.from('posts').update({ mood: finalMood, title: title.trim(), content: content.trim(), ...vibeFields }).eq('id', editingPostId).select('id').maybeSingle()
+      : supabase.from('posts').insert({ user_id: user.id, mood: finalMood, title: title.trim(), content: content.trim(), ...vibeFields }).select('id').maybeSingle();
     const { data, error } = await request;
     setSubmitting(false);
     if (error) {
@@ -230,7 +260,12 @@ export function CreatePostPage() {
       }
     }
     localStorage.removeItem(draftKey);
-    if (data) navigate(`/post/${data.id}`, { replace: true });
+    if (!data) return;
+    if (matchRequested && !editingPostId) {
+      navigate(`/matches?find=${data.id}`, { replace: true });
+    } else {
+      navigate(`/post/${data.id}`, { replace: true });
+    }
   };
 
   const removeMedia = (index: number) => {
@@ -365,6 +400,74 @@ export function CreatePostPage() {
             placeholder="Share your thoughts anonymously..."
           />
           <p className="text-xs text-gray-600 mt-1 text-right">{content.length}/{maxContent}</p>
+        </div>
+
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-white flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-primary" /> Your vibe
+              </p>
+              <p className="text-xs text-gray-400">
+                {vibe ? `Intensity ${vibe.intensity}/100${vibe.source === 'local' ? ' · quick read' : ''}` : 'Let AI read the feeling in your post, then adjust the tags.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { void readVibe(); }}
+              disabled={analyzing || !currentText}
+              className="px-3 py-2 rounded-lg bg-primary/20 text-primary-50 text-xs font-medium flex items-center gap-1.5 disabled:opacity-40"
+            >
+              {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {vibe && vibeText === currentText ? 'Read again' : 'Read my vibe'}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {(showAllTags ? [...VIBE_TAGS] : Array.from(new Set([...vibeTags, ...VIBE_TAGS.slice(0, 8)]))).map(tag => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                aria-pressed={vibeTags.includes(tag)}
+                className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
+                  vibeTags.includes(tag) ? 'bg-primary text-white' : 'bg-surface-50 text-gray-400 hover:text-white'
+                }`}
+              >
+                #{VIBE_TAG_LABELS[tag]}
+              </button>
+            ))}
+            <button type="button" onClick={() => setShowAllTags(v => !v)} className="px-2 py-1 text-xs text-primary-50">
+              {showAllTags ? 'Fewer' : 'More tags'}
+            </button>
+          </div>
+
+          {!editingPostId && (
+            vibe?.is_crisis ? (
+              <p className="text-xs text-gray-400">
+                We won't pair this post with a stranger. Please reach out to one of the support lines below. You matter.
+              </p>
+            ) : profile?.open_to_matching === false ? (
+              <p className="text-xs text-gray-500">Vibe matching is off in your profile settings.</p>
+            ) : (
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={wantsMatch}
+                  onChange={e => setWantsMatch(e.target.checked)}
+                  className="mt-0.5 accent-primary"
+                />
+                <span>
+                  <span className="text-sm text-white flex items-center gap-1.5">
+                    <HeartHandshake className="w-4 h-4 text-secondary" /> Match me with someone who feels this too
+                  </span>
+                  <span className="block text-xs text-gray-500">
+                    They get an anonymous request. If they say yes, you both get a private chat. No names or profiles are shared.
+                  </span>
+                </span>
+              </label>
+            )
+          )}
         </div>
 
         {crisisResources.length > 0 && (

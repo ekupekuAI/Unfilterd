@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Avatar } from './Avatar';
-import { Bell, Search, SunMoon } from 'lucide-react';
+import { Bell, Search, SunMoon, HeartHandshake } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../hooks/useTheme';
@@ -33,6 +33,14 @@ export function TopNav() {
         </button>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/matches')}
+            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+            aria-label="Vibe matches"
+            title="Vibe matches"
+          >
+            <HeartHandshake className="w-5 h-5" />
+          </button>
           <button
             onClick={() => navigate('/search')}
             className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors"

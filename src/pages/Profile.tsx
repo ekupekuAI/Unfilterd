@@ -21,6 +21,7 @@ export function ProfilePage() {
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const [tab, setTab] = useState<ProfileTab>('posts');
+  const [savingMatchPref, setSavingMatchPref] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [contentLoading, setContentLoading] = useState(true);
   const [editUsername, setEditUsername] = useState(false);
@@ -169,6 +170,14 @@ export function ProfilePage() {
     setNewPassword('');
   };
 
+  const handleToggleMatching = async (open: boolean) => {
+    if (!user) return;
+    setSavingMatchPref(true);
+    await supabase.from('profiles').update({ open_to_matching: open }).eq('id', user.id);
+    await refreshProfile();
+    setSavingMatchPref(false);
+  };
+
   const saveNotificationSettings = () => {
     localStorage.setItem(`unfilterd:profile-settings:${user?.id ?? 'guest'}`, JSON.stringify(notificationSettings));
   };
@@ -285,6 +294,19 @@ export function ProfilePage() {
             <input value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} type="password" placeholder="Current password" className="w-full bg-surface-50 rounded-lg px-4 py-3 text-white text-sm border border-white/5" />
             <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="New password" className="w-full bg-surface-50 rounded-lg px-4 py-3 text-white text-sm border border-white/5" />
             <button onClick={handleChangePassword} className="px-4 py-2 rounded-lg bg-primary text-white text-sm">Change password</button>
+          </div>
+          <div className="bg-surface rounded-2xl p-5 space-y-2">
+            <h3 className="text-sm font-medium text-white">Vibe matching</h3>
+            <label className="flex items-center justify-between gap-3 text-sm text-gray-300">
+              <span>Let people who feel the same send me anonymous chat requests</span>
+              <input
+                type="checkbox"
+                checked={effectiveProfile.open_to_matching !== false}
+                disabled={savingMatchPref}
+                onChange={e => { void handleToggleMatching(e.target.checked); }}
+              />
+            </label>
+            <p className="text-xs text-gray-500">Turning this off also stops your own posts from asking for a match.</p>
           </div>
           <div className="bg-surface rounded-2xl p-5 space-y-3">
             <h3 className="text-sm font-medium text-white">Notifications & Privacy</h3>

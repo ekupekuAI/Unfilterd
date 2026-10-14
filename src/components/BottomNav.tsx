@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Search, PlusSquare, Bell, User, Compass, Users } from 'lucide-react';
+import { Home, PlusSquare, Bell, User, Compass, Users, HeartHandshake } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 const navItems = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/explore', icon: Compass, label: 'Explore' },
-  { path: '/search', icon: Search, label: 'Search' },
+  { path: '/matches', icon: HeartHandshake, label: 'Matches' },
   { path: '/communities', icon: Users, label: 'Communities' },
   { path: '/create', icon: PlusSquare, label: 'Post' },
   { path: '/notifications', icon: Bell, label: 'Alerts' },
