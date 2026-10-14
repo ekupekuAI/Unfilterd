@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { Post, Mood } from '../types';
 import { MOOD_CONFIG } from '../types';
 import { PostCard } from '../components/PostCard';
+import { motion } from 'framer-motion';
 import { PostCardSkeleton } from '../components/Skeleton';
 import { PageContainer, EmptyState } from '../components/Layout';
 import { Flame, Clock, Users, Filter, RefreshCw, Sparkles, X } from 'lucide-react';
@@ -203,9 +204,7 @@ export function HomeFeedPage() {
   return (
     <PageContainer>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          UNFILTERD
-        </h1>
+        <h1 className="font-display text-3xl text-white">How's everyone feeling?</h1>
         <div className="flex items-center gap-2">
           <button onClick={refresh} className="p-2 rounded-lg text-gray-400 hover:bg-white/5 transition-colors" title="Refresh feed">
             <RefreshCw className="w-5 h-5" />
@@ -312,13 +311,19 @@ export function HomeFeedPage() {
             description={filter === 'following' ? 'Follow some users to see their posts here' : vibeFilters.length ? 'You could be the first. Someone out there may be feeling it too.' : 'Be the first to share something!'}
           />
         ) : (
-          posts.map(post => (
-            <PostCard
+          posts.map((post, index) => (
+            <motion.div
               key={post.id}
-              post={post}
-              onLikeToggle={handleLikeToggle}
-              onSaveToggle={handleSaveToggle}
-            />
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: (index % PAGE_SIZE) * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <PostCard
+                post={post}
+                onLikeToggle={handleLikeToggle}
+                onSaveToggle={handleSaveToggle}
+              />
+            </motion.div>
           ))
         )}
         <div ref={sentinelRef} />

@@ -12,7 +12,7 @@ html[data-theme='light'] {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
+  scrollbar-color: #2E2950 transparent;
 }
 
 *::-webkit-scrollbar {
@@ -24,14 +24,16 @@ html[data-theme='light'] {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #374151;
+  background-color: #2E2950;
   border-radius: 3px;
 }
 
 body {
   background:
-    radial-gradient(circle at top, rgba(139, 92, 246, 0.14), transparent 30%),
-    linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    radial-gradient(1200px 600px at 10% -10%, rgba(157,124,255,0.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, rgba(255,164,140,0.10), transparent 60%),
+    #07060F;
+  background-attachment: fixed;
   color: #F8FAFC;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -42,11 +44,11 @@ html[data-theme='light'] body {
   background:
     radial-gradient(circle at top, rgba(14, 165, 233, 0.12), transparent 30%),
     linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-  color: #0f172a;
+  color: #07060F;
 }
 
 :focus-visible {
-  outline: 2px solid #8b5cf6;
+  outline: 2px solid #9D7CFF;
   outline-offset: 2px;
 }
 
@@ -64,17 +66,31 @@ html[data-theme='light'] body {
     background: rgba(17, 24, 39, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(157,124,255, 0.1);
   }
   .glass-strong {
     background: rgba(30, 41, 59, 0.8);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(157,124,255, 0.15);
   }
   html[data-theme='light'] .glass,
   html[data-theme='light'] .glass-strong {
     background: rgba(255, 255, 255, 0.72);
     border-color: rgba(15, 23, 42, 0.08);
+  }
+}
+
+@layer components {
+  .text-aurora {
+    background: linear-gradient(100deg, #D9CCFF 0%, #9D7CFF 40%, #FFA48C 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .card-soft {
+    background: linear-gradient(180deg, rgba(27,24,48,0.72), rgba(18,16,31,0.72));
+    border: 1px solid rgba(157,124,255,0.10);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -24px rgba(0,0,0,0.6);
   }
 }

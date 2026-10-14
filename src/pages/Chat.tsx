@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Send, Loader2, ShieldAlert, LogOut, Ban, MoreVertical, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -151,7 +152,7 @@ export function ChatPage() {
   const closed = Boolean(conversation.closed_at);
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col">
+    <div className="min-h-screen bg-[#07060F] flex flex-col">
       <div className="max-w-2xl w-full mx-auto flex-1 flex flex-col px-4 pt-4 pb-24 md:pb-6">
         <div className="flex items-center gap-3 pb-3 border-b border-white/5">
           <button onClick={() => navigate('/matches')} className="p-2 -ml-2 rounded-lg hover:bg-white/5 text-gray-400" aria-label="Back to matches">
@@ -202,7 +203,13 @@ export function ChatPage() {
           {messages.map(message => {
             const mine = message.sender_id === user.id;
             return (
-              <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
+              >
                 <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words ${
                   mine ? 'bg-primary text-white rounded-br-md' : 'bg-surface text-gray-100 rounded-bl-md'
                 }`}>
@@ -212,7 +219,7 @@ export function ChatPage() {
                     {mine && message.read_at ? ' · seen' : ''}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
           <div ref={bottomRef} />
@@ -227,7 +234,7 @@ export function ChatPage() {
         ) : (
           <form
             onSubmit={e => { e.preventDefault(); void send(); }}
-            className="flex items-end gap-2 sticky bottom-20 md:bottom-4 bg-[#0F172A] pt-2"
+            className="flex items-end gap-2 sticky bottom-20 md:bottom-4 bg-[#07060F] pt-2"
           >
             <textarea
               value={draft}

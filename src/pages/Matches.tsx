@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { HeartHandshake, Loader2, MessageCircle, Check, X, Clock, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
@@ -132,7 +133,7 @@ export function MatchesPage() {
   return (
     <PageContainer>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 className="font-display text-3xl text-white flex items-center gap-2">
           <HeartHandshake className="w-6 h-6 text-secondary" /> Vibe matches
         </h1>
         <p className="text-sm text-gray-400 mt-1">
@@ -141,7 +142,11 @@ export function MatchesPage() {
       </div>
 
       {find.status !== 'idle' && (
-        <div className="mb-6 rounded-xl border border-secondary/20 bg-secondary/10 p-4 flex items-start gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: -8, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="mb-6 rounded-2xl border border-secondary/25 bg-gradient-to-br from-secondary/15 to-primary/10 p-4 flex items-start gap-3"
+        >
           {find.status === 'searching'
             ? <Loader2 className="w-5 h-5 text-secondary animate-spin shrink-0" />
             : <Sparkles className="w-5 h-5 text-secondary shrink-0" />}
@@ -163,7 +168,7 @@ export function MatchesPage() {
             )}
             {find.status === 'error' && <p className="text-danger-50">{find.message}</p>}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {error && (
@@ -185,8 +190,16 @@ export function MatchesPage() {
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-3">Someone feels like you</h2>
           <div className="space-y-3">
+            <AnimatePresence initial={false}>
             {incoming.map(match => (
-              <div key={match.id} className="rounded-xl bg-surface p-4 border border-white/5">
+              <motion.div
+                key={match.id}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -40, transition: { duration: 0.2 } }}
+                className="card-soft rounded-2xl p-4"
+              >
                 <p className="text-xs text-gray-500">{timeAgo(match.created_at)} ago · they wrote</p>
                 {match.post && (
                   <>
@@ -212,8 +225,9 @@ export function MatchesPage() {
                     <X className="w-4 h-4" /> Not now
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         </section>
       )}

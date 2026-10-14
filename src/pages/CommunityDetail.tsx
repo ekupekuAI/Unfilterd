@@ -68,7 +68,7 @@ export function CommunityDetailPage() {
         <div className="h-28 bg-gradient-to-r from-primary/30 via-secondary/20 to-warning/20" />
         <div className="p-5 -mt-10">
           <div className="flex items-end gap-4">
-            <Avatar seed={community.avatar_url || community.slug} size="xl" className="ring-4 ring-[#0F172A]" />
+            <Avatar seed={community.avatar_url || community.slug} size="xl" className="ring-4 ring-[#07060F]" />
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-white">{community.name}</h1>
               <p className="text-sm text-gray-400 mt-1">{community.description || 'No description yet.'}</p>

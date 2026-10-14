@@ -21,7 +21,7 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#07060F] flex items-center justify-center p-4">
       <div className="w-full max-w-md glass rounded-2xl p-8">
         <h1 className="text-2xl font-bold text-white mb-2">Set new password</h1>
         {error && <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger-50 text-sm">{error}</div>}

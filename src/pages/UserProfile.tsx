@@ -118,7 +118,7 @@ export function UserProfilePage() {
         <div className="h-28 bg-gradient-to-r from-primary/30 via-secondary/20 to-warning/20" />
         <div className="p-5 -mt-10">
           <div className="flex items-end gap-4">
-            <Avatar seed={profile.avatar_seed} size="xl" className="ring-4 ring-[#0F172A]" />
+            <Avatar seed={profile.avatar_seed} size="xl" className="ring-4 ring-[#07060F]" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold text-white">{profile.username}</h1>

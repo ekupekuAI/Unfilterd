@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useOutlet } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
@@ -18,21 +19,23 @@ import { CommunityDetailPage } from './pages/CommunityDetail';
 import { NotificationsPage } from './pages/Notifications';
 import { MatchesPage } from './pages/Matches';
 import { ChatPage } from './pages/Chat';
+import { LandingPage } from './pages/Landing';
+import { BreathePage } from './pages/Breathe';
+import { HelpPage } from './pages/Help';
 import { AdminPage } from './pages/Admin';
 import { AnalyticsPage } from './pages/Analytics';
 import { NotFoundPage } from './pages/NotFound';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { StartupAnimation } from './components/SplashScreen/StartupAnimation';
+import { IntroGate } from './components/intro/IntroGate';
 import { BottomNav } from './components/BottomNav';
 import { TopNav } from './components/TopNav';
 import { LoadingSpinner, EmptyState } from './components/Layout';
 import { ShieldAlert } from 'lucide-react';
-import { useStartupAnimation } from './hooks/useStartupAnimation';
 
 function ProtectedRoute() {
   const { user, profile, loading } = useAuth();
   if (loading) return <LoadingSpinner className="min-h-screen" />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/welcome" replace />;
   if (profile?.is_suspended) {
     return (
       <EmptyState
@@ -45,7 +48,7 @@ function ProtectedRoute() {
   return (
     <>
       <TopNav />
-      <Outlet />
+      <AnimatedOutlet />
       <BottomNav />
     </>
   );
@@ -76,9 +79,30 @@ function ShortcutLayer() {
   return null;
 }
 
-function StartupLayer() {
-  const startup = useStartupAnimation();
-  return <StartupAnimation active={startup.active} phase={startup.phase} />;
+// Each page fades and lifts in; the outgoing page fades out first.
+function AnimatedOutlet() {
+  const location = useLocation();
+  const outlet = useOutlet();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.main
+        key={location.pathname}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {outlet}
+      </motion.main>
+    </AnimatePresence>
+  );
+}
+
+// Signed-in people skip the marketing page.
+function WelcomeRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSpinner className="min-h-screen" />;
+  return user ? <Navigate to="/" replace /> : <LandingPage />;
 }
 
 export default function App() {
@@ -88,8 +112,11 @@ export default function App() {
         <ErrorBoundary>
         <AuthProvider>
           <ShortcutLayer />
-          <StartupLayer />
+          <IntroGate />
           <Routes>
+          <Route path="/welcome" element={<WelcomeRoute />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/breathe" element={<BreathePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

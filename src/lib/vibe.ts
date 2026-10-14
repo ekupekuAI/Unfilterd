@@ -64,7 +64,7 @@ export function isVibeTag(value: string): value is VibeTag {
 }
 
 export const CRISIS_RESOURCES = [
-  'India: Tele-MANAS 14416 (free, 24x7) or KIRAN 1800-599-0019.',
+  'India: Tele-MANAS 14416 (free, 24x7) or Vandrevala Foundation +91 9999 666 555 (24x7).',
   'US & Canada: call or text 988.',
   'Anywhere: contact local emergency services or someone you trust nearby.',
 ];
