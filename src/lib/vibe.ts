@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import safetyPatterns from '../../shared/safety_patterns.json';
 import type { Mood, VibeMatch } from '../types';
 
 /**
@@ -32,6 +33,10 @@ export const VIBE_TAGS = [
   'small-win',
   'venting',
   'need-advice',
+  'placement-stress',
+  'parental-pressure',
+  'comparison',
+  'homesickness',
 ] as const;
 
 export type VibeTag = (typeof VIBE_TAGS)[number];
@@ -57,6 +62,10 @@ export const VIBE_TAG_LABELS: Record<VibeTag, string> = {
   'small-win': 'Small win',
   venting: 'Venting',
   'need-advice': 'Need advice',
+  'placement-stress': 'Placement stress',
+  'parental-pressure': 'Parental pressure',
+  comparison: 'Comparison',
+  homesickness: 'Homesickness',
 };
 
 export function isVibeTag(value: string): value is VibeTag {
@@ -119,22 +128,42 @@ const TAG_KEYWORDS: Record<VibeTag, string[]> = {
   'small-win': ['small win', 'finally did', 'proud of myself', 'i did it', 'managed to', 'first time in'],
   venting: ['just venting', 'need to vent', 'rant', 'ranting', 'had to get this out', 'ugh'],
   'need-advice': ['advice', 'what should i do', 'help me', 'any tips', 'how do i', 'what do i do'],
+  'placement-stress': ['placement', 'placements', 'campus drive', 'no offer', 'offer letter', 'internship', 'package', 'shortlist', 'rejected again'],
+  'parental-pressure': ['my parents want', 'parents expect', 'papa ne', 'mummy ne', 'ghar wale', 'parents force', 'amma nanna', 'family pressure', 'disappoint my parents'],
+  comparison: ['log kya kahenge', 'everyone else is', 'compared to', 'sharma ji', 'cousin got', 'friends got placed', 'behind everyone', 'better than me'],
+  homesickness: ['homesick', 'miss home', 'ghar ki yaad', 'miss my mom', 'miss amma', 'hostel food', 'far from home', 'want to go home', 'intiki vellali'],
 };
 
-const CRISIS_PATTERNS = [
-  'end my life', 'end it all', 'want to die', 'kill myself', 'suicidal', 'suicide',
-  'self harm', 'self-harm', 'hurt myself', 'no reason to live', 'can’t go on', "can't go on",
-  'want to disappear', 'better off dead', 'not worth living', 'cutting myself',
-];
+export type Risk = 'none' | 'possible' | 'high';
+const RISK_ORDER: Risk[] = ['none', 'possible', 'high'];
 
-const TOXICITY_KEYWORDS = [
-  'kill you', 'murder', 'threat', 'attack', 'rape', 'assault', 'bomb', 'terrorist', 'shoot', 'stab',
-  'torture', 'slur', 'harass',
-];
+/** Same normalisation as the server and DB: NFC, apostrophes folded, no zero-width chars, lowercase. */
+function normalizeForSafety(text: string): string {
+  return (text ?? '')
+    .normalize('NFC')
+    .replace(/[​‌‍﻿]/g, '')
+    .replace(/[’‘ʼ]/g, "'")
+    .toLowerCase();
+}
+
+const CRISIS_PATTERNS = safetyPatterns.crisis.map(row => normalizeForSafety(row.pattern));
+const CRISIS_EXPLICIT_PATTERNS = safetyPatterns.crisis_explicit.map(row => normalizeForSafety(row.pattern));
+const TOXICITY_PATTERNS = safetyPatterns.toxicity.map(row => ({ pattern: normalizeForSafety(row.pattern), flag: row.flag }));
+
+/**
+ * Raise a risk level to what the shared safety patterns require. Never lowers it.
+ * The database trigger applies the same list again server-side.
+ */
+export function applyRiskFloor(text: string, risk: Risk): Risk {
+  const norm = normalizeForSafety(text);
+  let floor: Risk = 'none';
+  if (CRISIS_EXPLICIT_PATTERNS.some(pattern => norm.includes(pattern))) floor = 'high';
+  else if (CRISIS_PATTERNS.some(pattern => norm.includes(pattern))) floor = 'possible';
+  return RISK_ORDER.indexOf(risk) >= RISK_ORDER.indexOf(floor) ? risk : floor;
+}
 
 export function detectCrisisLocally(text: string): boolean {
-  const lower = text.toLowerCase();
-  return CRISIS_PATTERNS.some(pattern => lower.includes(pattern));
+  return applyRiskFloor(text, 'none') !== 'none';
 }
 
 /** Keyword fallback used when the edge function is unreachable. */
@@ -161,7 +190,8 @@ export function analyzeVibeLocally(text: string): VibeAnalysis {
   const caps = (text.match(/[A-Z]{3,}/g) ?? []).length;
   const intensity = Math.min(100, 30 + tagScores.length * 12 + exclamations * 5 + caps * 5 + (bestMoodScore > 0 ? 10 : 0));
 
-  const flags = TOXICITY_KEYWORDS.filter(kw => lower.includes(kw));
+  const normForSafety = normalizeForSafety(text);
+  const flags = [...new Set(TOXICITY_PATTERNS.filter(row => normForSafety.includes(row.pattern)).map(row => row.flag))];
   const is_crisis = detectCrisisLocally(text);
 
   return {
