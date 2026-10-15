@@ -6,12 +6,13 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from transformers import AutoModel, XLMRobertaTokenizerFast
+from transformers import AutoModel, AutoTokenizer
 
 from vibe_schema import MOODS, TAGS, TOX_LEVELS, RISK_LEVELS, LANG_STYLES
 
-BACKBONE = "microsoft/Multilingual-MiniLM-L12-H384"
-TOKENIZER = "xlm-roberta-base"  # the MiniLM multilingual checkpoint uses XLM-R's vocabulary
+# multilingual-e5-small: same size and XLM-R vocabulary as Multilingual-MiniLM, but trained
+# contrastively so paraphrases land close together; v1's first run memorised phrasings.
+BACKBONE = "intfloat/multilingual-e5-small"
 MAX_LEN = 128
 HEAD_SIZES = {
     "mood": len(MOODS),
@@ -24,10 +25,10 @@ HEAD_SIZES = {
 CACHE = str(Path(__file__).resolve().parent / "hf_cache")
 
 
-def load_tokenizer(path: str | None = None) -> XLMRobertaTokenizerFast:
+def load_tokenizer(path: str | None = None, backbone: str | None = None):
     if path:
-        return XLMRobertaTokenizerFast.from_pretrained(path)
-    return XLMRobertaTokenizerFast.from_pretrained(TOKENIZER, cache_dir=CACHE)
+        return AutoTokenizer.from_pretrained(path)
+    return AutoTokenizer.from_pretrained(backbone or BACKBONE, cache_dir=CACHE)
 
 
 class VibeModel(nn.Module):
@@ -39,8 +40,8 @@ class VibeModel(nn.Module):
         self.heads = nn.ModuleDict({name: nn.Linear(hidden, size) for name, size in HEAD_SIZES.items()})
 
     @classmethod
-    def from_backbone(cls, freeze_embeddings: bool = True) -> "VibeModel":
-        encoder = AutoModel.from_pretrained(BACKBONE, cache_dir=CACHE)
+    def from_backbone(cls, backbone: str | None = None, freeze_embeddings: bool = True) -> "VibeModel":
+        encoder = AutoModel.from_pretrained(backbone or BACKBONE, cache_dir=CACHE)
         if freeze_embeddings:
             encoder.embeddings.word_embeddings.weight.requires_grad_(False)
         return cls(encoder)
@@ -61,7 +62,7 @@ class VibeModel(nn.Module):
         torch.save(self.heads.state_dict(), directory / "heads.pt")
         config = {
             "moods": MOODS, "tags": TAGS, "toxicity": TOX_LEVELS, "risk": RISK_LEVELS,
-            "lang": LANG_STYLES, "max_len": MAX_LEN, "backbone": BACKBONE, **(extra or {}),
+            "lang": LANG_STYLES, "max_len": MAX_LEN, "backbone": self.encoder.config.name_or_path, **(extra or {}),
         }
         (directory / "vibe_config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
 

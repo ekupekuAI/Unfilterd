@@ -51,6 +51,8 @@ class VibeDataset(Dataset):
             "toxicity": TOX_LEVELS.index(row["toxicity"]),
             "risk": RISK_LEVELS.index(row["risk"]),
             "lang": LANG_STYLES.index(row["lang"]),
+            # GoEmotions has no tag annotations: an empty list there means "unknown", not "no feelings"
+            "tag_mask": 0.0 if row.get("source") == "goemotions" else 1.0,
         }
 
 
@@ -66,6 +68,7 @@ def make_collate(tokenizer, max_len: int):
             "toxicity": torch.tensor([b["toxicity"] for b in batch]),
             "risk": torch.tensor([b["risk"] for b in batch]),
             "lang": torch.tensor([b["lang"] for b in batch]),
+            "tag_mask": torch.tensor([b["tag_mask"] for b in batch], dtype=torch.float),
         }
     return collate
 
@@ -89,21 +92,25 @@ class Losses(nn.Module):
         tag_pos = tag_pos.clamp(min=1)
         pos_weight = ((len(train_rows) - tag_pos) / tag_pos).sqrt().clamp(max=10.0)
         self.mood = nn.CrossEntropyLoss(weight=mood_w)
-        self.tags = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        self.tags = nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction="none")
         self.toxicity = nn.CrossEntropyLoss(weight=tox_w)
         self.risk = nn.CrossEntropyLoss(weight=risk_w)
         self.lang = nn.CrossEntropyLoss()
 
-    def forward(self, out: dict, batch: dict) -> torch.Tensor:
-        parts = {
+    def parts(self, out: dict, batch: dict) -> dict[str, torch.Tensor]:
+        mask = batch["tag_mask"]
+        tag_loss = self.tags(out["tags"].float(), batch["tags"]).mean(-1)
+        return {
             "mood": self.mood(out["mood"].float(), batch["mood"]),
-            "tags": self.tags(out["tags"].float(), batch["tags"]),
+            "tags": (tag_loss * mask).sum() / mask.sum().clamp(min=1.0),
             "intensity": nn.functional.smooth_l1_loss(torch.sigmoid(out["intensity"].float()), batch["intensity"]),
             "toxicity": self.toxicity(out["toxicity"].float(), batch["toxicity"]),
             "risk": self.risk(out["risk"].float(), batch["risk"]),
             "lang": self.lang(out["lang"].float(), batch["lang"]),
         }
-        return sum(LOSS_WEIGHTS[k] * v for k, v in parts.items())
+
+    def forward(self, out: dict, batch: dict) -> torch.Tensor:
+        return sum(LOSS_WEIGHTS[k] * v for k, v in self.parts(out, batch).items())
 
 
 @torch.no_grad()
@@ -140,6 +147,7 @@ def main() -> None:
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--smoke", action="store_true", help="200 rows, short sequences: a quick correctness check")
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--backbone", default=None, help="Hugging Face encoder id (default: vibe_model.BACKBONE)")
     args = ap.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -159,11 +167,11 @@ def main() -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     amp_dtype = torch.bfloat16 if device.type == "cuda" else None
-    tokenizer = load_tokenizer()
+    tokenizer = load_tokenizer(backbone=args.backbone)
     collate = make_collate(tokenizer, max_len)
     val_loader = DataLoader(VibeDataset(val_rows), batch_size=64, collate_fn=collate)
 
-    model = VibeModel.from_backbone().to(device)
+    model = VibeModel.from_backbone(args.backbone).to(device)
     losses = Losses(train_rows).to(device)
     head_params = list(model.heads.parameters())
     enc_params = [p for p in model.encoder.parameters() if p.requires_grad]

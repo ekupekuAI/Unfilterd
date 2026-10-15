@@ -8,7 +8,7 @@ import pytest
 from vibe_schema import MOODS, TAGS, RISK_LEVELS, TOX_LEVELS, LANG_STYLES, floor_risk, normalize
 
 TESTSETS = Path(__file__).resolve().parent / "testsets"
-MIN_SIZES = {"crisis": 180, "codemix": 140, "sarcasm": 90, "injection": 45, "telugu": 90}
+MIN_SIZES = {"crisis": 180, "codemix": 140, "sarcasm": 90, "injection": 45, "telugu": 90, "holdout": 80}
 
 
 def load(name):

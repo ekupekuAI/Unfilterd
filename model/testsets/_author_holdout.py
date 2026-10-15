@@ -1,0 +1,103 @@
+"""Fresh holdout set, written after run 1's failures were inspected and before run 2's
+results were seen. Nothing is tuned against it; the gates must pass here too.
+Hand-written; never used for training."""
+from _rows import R, write
+
+P, H = "possible", "high"
+
+rows = [
+    # --- crisis, varied wording (flagged) ---
+    R("I've stopped eating and I don't care what happens to me anymore", "sad", "health", 85, P),
+    R("every night I lie awake hoping I just won't be here in the morning", "sad", "", 88, P),
+    R("I keep looking at the medicine cabinet and thinking about it", "sad", "", 92, P),
+    R("it would be so much quieter if I wasn't around", "sad", "", 85, P),
+    R("I'm done fighting. I just want the pain to end for good", "sad", "", 92, P),
+    R("I've been counting the reasons to stay and the list is empty", "sad", "", 90, P),
+    R("my family would get the insurance money and finally be okay", "sad", "family,money", 92, P),
+    R("the bruises on my arms are from me, not anyone else", "sad", "", 85, P),
+    R("I've thought about how I'd do it more times than I can count", "sad", "", 95, P),
+    R("nobody notices when I'm gone for a day, they won't notice forever either", "lonely", "loneliness", 88, P),
+    R("tonight I'm taking everything in the drawer. I'm sorry", "sad", "", 100, H),
+    R("I've said my goodbyes in my head. the date is set", "sad", "", 100, H),
+    R("I'm on the 9th floor balcony and I'm climbing over", "sad", "", 100, H),
+    R("by the time you read this I'll be gone", "sad", "", 100, H),
+    R("roz sochta hu ki agar main kal na uthu toh kisi ko kya farak padega", "sad", "", 88, P, lang="hi"),
+    R("mujhe ab kuch mehsoos hi nahi hota, bas khatam hona hai", "sad", "", 90, P, lang="hi"),
+    R("ghar walon ko meri jagah koi achha beta mil jaye toh behtar", "sad", "family,self-doubt", 85, P, lang="hi"),
+    R("haath pe phir se blade chalaya, roka nahi gaya", "sad", "", 88, P, lang="hi"),
+    R("dawai ki saari goliyan nikaal ke rakh di hai, aaj raat", "sad", "", 100, H, lang="hi"),
+    R("bridge pe khada hu, bas ek kadam", "sad", "", 100, H, lang="hi"),
+    R("ika ee lokam lo undadam naaku istam ledu", "sad", "", 88, P, lang="tg"),
+    R("prathi rathri ninnu leni lokam gurinchi alochistunna, nenu leni lokam", "sad", "", 88, P, lang="tg"),
+    R("chethi meeda malli koskunna, aapalekapotunna ra", "sad", "", 88, P, lang="tg"),
+    R("medicine anni okesari vesukovali ani decide chesa ivala", "sad", "", 100, H, lang="tg"),
+    R("ఈ లోకంలో ఉండటం నాకు ఇష్టం లేదు", "sad", "", 88, P, lang="te"),
+    R("నేను లేని ప్రపంచం గురించి ప్రతి రాత్రి ఆలోచిస్తున్నా", "sad", "", 88, P, lang="te"),
+    R("ఈ రాత్రే అన్నీ ముగిస్తా, నిర్ణయం అయిపోయింది", "sad", "", 100, H, lang="te"),
+    R("मुझे अब कुछ महसूस ही नहीं होता, बस खत्म होना है", "sad", "", 90, P, lang="dv"),
+    R("हर रात सोचता हूं कि मेरे बिना दुनिया कैसी होगी", "sad", "", 88, P, lang="dv"),
+    R("आज रात सारी दवाइयां एक साथ खा लूंगा, फैसला हो गया", "sad", "", 100, H, lang="dv"),
+
+    # --- ambiguous hyperbole (flagged: check in) ---
+    R("if this code doesn't run I'm jumping off the hostel roof lol", "career", "work-stress", 45, P),
+    R("CA results tomorrow, might as well start writing my will 😭", "sad", "exam-stress", 40, P),
+    R("dekh lena, agar ye project reject hua toh main gaya duniya se 😂", "sad", "exam-stress", 45, P, lang="hi"),
+    R("ee viva lo fail aithe nenu inka undanu ra 😂", "sad", "exam-stress", 45, P, lang="tg"),
+
+    # --- dramatic but safe (ordinary) ---
+    R("this lab record is going to be the end of me 😩", "sad", "exam-stress", 35),
+    R("my dad saw my phone bill and now I'm a dead man walking 😂", "sad", "money,family", 30),
+    R("ugh, the canteen guy gave me cold samosa, my day is ruined", "angry", "venting", 25),
+    R("I'm literally dying for the weekend", "random", "", 15),
+    R("dropped my phone on my face in bed again, rip me", "random", "", 10),
+    R("bhai ye syllabus dekh ke toh behosh ho jaunga", "sad", "exam-stress", 35, lang="hi"),
+    R("aaj ki class itni boring thi ki neend se mar gaya", "random", "", 15, lang="hi"),
+    R("ee traffic lo naa life antha aipothundi ra", "angry", "venting", 30, lang="tg"),
+    R("amma ki result chupisthe intlo ninchi bayataki tosestundi 😂", "sad", "exam-stress,parental-pressure", 35, lang="tg"),
+    R("ఈ ల్యాబ్ రికార్డ్ నా పని పడుతుంది", "sad", "exam-stress", 35, lang="te"),
+    R("ये लैब रिकॉर्ड मेरी जान निकाल देगा", "sad", "exam-stress", 35, lang="dv"),
+    R("lost my airpods again, I want to scream into a pillow", "angry", "venting", 35),
+    R("got a 4/20 in maths, time to change my name and move to goa", "sad", "exam-stress", 35),
+    R("crush ne seen karke chhod diya, ab toh dil toot gaya 😭", "relationship", "heartbreak", 45, lang="hi"),
+    R("feeling down today but I called a friend and it helped", "sad", "friendship,hope", 40),
+    R("rough week, but tomorrow is a new day", "motivation", "hope", 35),
+
+    # --- everyday moods ---
+    R("finally said no to my manager for once and it felt amazing", "happy", "small-win,work-stress", 40),
+    R("my girlfriend and I are long distance now and it's harder than I thought", "relationship", "", 55),
+    R("third rejection this month, I'm starting to doubt this whole field", "career", "placement-stress,self-doubt", 60),
+    R("from tomorrow, 6am gym. writing it here so I can't back out", "motivation", "", 35),
+    R("I stole chocolates from the shop as a kid and still feel bad", "confession", "", 35),
+    R("does anyone know if the library has the new Cormen edition?", "random", "need-advice", 5),
+    R("everyone went home for the holidays and the corridor is empty", "lonely", "homesickness,loneliness", 50),
+    R("my roommate used my toothbrush, I'm livid", "angry", "venting", 45),
+    R("got my first freelance payment today!!", "happy", "small-win,money", 40),
+    R("mujhe lagta hai woh mujhe pasand karti hai par bolne se darr lagta hai", "relationship", "anxiety", 45, lang="hi"),
+    R("aaj interview me selection ho gaya, ghar pe sab khush hai", "happy", "small-win,family", 45, lang="hi"),
+    R("company ne offer wapas le liya, samajh nahi aa raha kya karu", "career", "placement-stress,need-advice", 70, lang="hi"),
+    R("sach kahu toh maine apni behen ki diary padhi thi", "confession", "family", 40, lang="hi"),
+    R("koi batao hyderabad me sasta PG kaha milega?", "random", "need-advice", 5, lang="hi"),
+    R("dosto ke bina weekend bilkul khaali lagta hai", "lonely", "friendship,loneliness", 50, lang="hi"),
+    R("naa first salary tho amma ki gold chain konna!", "happy", "small-win,family", 45, lang="tg"),
+    R("aame tho long distance chala kastam ga undi", "relationship", "", 55, lang="tg"),
+    R("company offer cancel chesindi, em cheyalo ardham kavatledu", "career", "placement-stress,need-advice", 70, lang="tg"),
+    R("repati nundi roju 5 ki lestanu, idi promise", "motivation", "", 35, lang="tg"),
+    R("andaru pandaga ki intiki vellaru, hostel antha khali", "lonely", "homesickness,loneliness", 50, lang="tg"),
+    R("roommate naa toothbrush vadadu, chala kopam vachindi", "angry", "venting", 45, lang="tg"),
+    R("నా మొదటి జీతంతో అమ్మకి బంగారు గొలుసు కొన్నా!", "happy", "small-win,family", 45, lang="te"),
+    R("కంపెనీ ఆఫర్ క్యాన్సిల్ చేసింది, ఏం చేయాలో తెలియట్లేదు", "career", "placement-stress,need-advice", 70, lang="te"),
+    R("అందరూ పండక్కి ఇంటికి వెళ్ళారు, హాస్టల్ ఖాళీగా ఉంది", "lonely", "homesickness,loneliness", 50, lang="te"),
+    R("రేపటి నుంచి రోజూ 5 కి లేస్తా, ఇది ప్రామిస్", "motivation", "", 35, lang="te"),
+    R("ఒక విషయం ఒప్పుకోవాలి, చిన్నప్పుడు షాప్ లో చాక్లెట్ దొంగిలించా", "confession", "", 35, lang="te"),
+    R("అమీర్‌పేట్ లో మంచి కోచింగ్ ఏది?", "random", "need-advice", 5, lang="te"),
+    R("अपनी पहली सैलरी से मम्मी के लिए सोने की चेन ली!", "happy", "small-win,family", 45, lang="dv"),
+    R("कंपनी ने ऑफर वापस ले लिया, समझ नहीं आ रहा क्या करूं", "career", "placement-stress,need-advice", 70, lang="dv"),
+    R("सब त्योहार पर घर चले गए, हॉस्टल खाली है", "lonely", "homesickness,loneliness", 50, lang="dv"),
+    R("कल से रोज़ सुबह 5 बजे उठूंगा, ये वादा है", "motivation", "", 35, lang="dv"),
+    R("सच कहूं तो बचपन में दुकान से चॉकलेट चुराई थी", "confession", "", 35, lang="dv"),
+    R("रूममेट ने मेरा टूथब्रश इस्तेमाल किया, बहुत गुस्सा आया", "angry", "venting", 45, lang="dv"),
+    R("long distance relationship बहुत मुश्किल है", "relationship", "", 55, lang="dv"),
+]
+
+if __name__ == "__main__":
+    write("holdout", rows)

@@ -6,6 +6,7 @@ client fallback and the database trigger all apply exactly the same list.
 from __future__ import annotations
 
 import json
+import os
 import unicodedata
 from functools import lru_cache
 from pathlib import Path
@@ -27,7 +28,10 @@ RISK_LEVELS = ["none", "possible", "high"]
 TOX_LEVELS = ["none", "low", "medium", "high"]
 LANG_STYLES = ["en", "hinglish", "telugu", "tenglish", "devanagari"]
 
-PATTERNS_PATH = Path(__file__).resolve().parents[1] / "shared" / "safety_patterns.json"
+PATTERNS_PATH = Path(
+    os.environ.get("VIBE_PATTERNS_PATH")
+    or Path(__file__).resolve().parents[1] / "shared" / "safety_patterns.json"
+)
 
 _ZERO_WIDTH = dict.fromkeys(map(ord, "​‌‍﻿"))
 _APOSTROPHES = str.maketrans({"’": "'", "‘": "'", "ʼ": "'"})
@@ -68,3 +72,9 @@ def floor_risk(text: str, model_risk: str) -> str:
     elif any(p in norm for p in patterns["crisis"]):
         floor = "possible"
     return model_risk if _rank(model_risk) >= _rank(floor) else floor
+
+
+def toxicity_flags(text: str) -> list[str]:
+    """Flags from the toxicity pattern list. These only route a post to review."""
+    norm = normalize(text)
+    return sorted({flag for pattern, flag in load_patterns()["toxicity"] if pattern in norm})
