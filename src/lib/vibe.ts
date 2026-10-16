@@ -92,8 +92,22 @@ export interface VibeAnalysis {
   is_crisis: boolean;
   crisis_resources: string[];
   toxicity: VibeToxicity;
-  /** 'ai' when the edge function used a language model, 'local' for keyword heuristics. */
+  /** none | possible (private check-in) | high (help card + sensitive cover). is_crisis = risk !== 'none'. */
+  risk: Risk;
+  /** Language style of the post; picks the check-in card's language. */
+  lang_style: LangStyle;
+  /** 'ai' when Unfilterd Vibe (our own model) answered, 'local' for the keyword fallback. */
   source: 'ai' | 'local';
+}
+
+export type LangStyle = 'en' | 'hinglish' | 'telugu' | 'tenglish' | 'devanagari';
+const LANG_STYLES: LangStyle[] = ['en', 'hinglish', 'telugu', 'tenglish', 'devanagari'];
+
+/** Script-based guess used when the model is unavailable (Roman text defaults to English). */
+export function detectLangByScript(text: string): LangStyle {
+  if (/[ఀ-౿]/.test(text)) return 'telugu';
+  if (/[ऀ-ॿ]/.test(text)) return 'devanagari';
+  return 'en';
 }
 
 const MOOD_KEYWORDS: Record<Exclude<Mood, 'random'>, string[]> = {
@@ -192,13 +206,16 @@ export function analyzeVibeLocally(text: string): VibeAnalysis {
 
   const normForSafety = normalizeForSafety(text);
   const flags = [...new Set(TOXICITY_PATTERNS.filter(row => normForSafety.includes(row.pattern)).map(row => row.flag))];
-  const is_crisis = detectCrisisLocally(text);
+  const risk = applyRiskFloor(text, 'none');
+  const is_crisis = risk !== 'none';
 
   return {
     mood,
     vibe_tags,
     intensity,
     is_crisis,
+    risk,
+    lang_style: detectLangByScript(text),
     crisis_resources: is_crisis ? CRISIS_RESOURCES : [],
     toxicity: {
       isToxic: flags.length > 0,
@@ -223,37 +240,49 @@ function normalizeAnalysis(raw: unknown, text: string): VibeAnalysis {
   const intensity = typeof data.intensity === 'number' && Number.isFinite(data.intensity)
     ? Math.max(0, Math.min(100, Math.round(data.intensity)))
     : local.intensity;
-  // The local crisis check always applies, even when the model missed it.
-  const is_crisis = Boolean(data.is_crisis) || local.is_crisis;
+  // The model's risk, never below what is_crisis or the shared safety floor require.
+  const modelRisk: Risk = RISK_ORDER.includes(data.risk as Risk) ? (data.risk as Risk) : 'none';
+  const risk = applyRiskFloor(text, data.is_crisis && modelRisk === 'none' ? 'possible' : modelRisk);
+  const is_crisis = risk !== 'none';
   const toxicity = data.toxicity && typeof data.toxicity === 'object' ? { ...local.toxicity, ...data.toxicity } : local.toxicity;
+  const lang_style = LANG_STYLES.includes(data.lang_style as LangStyle) ? (data.lang_style as LangStyle) : local.lang_style;
 
   return {
     mood,
-    vibe_tags: vibe_tags.length ? vibe_tags : local.vibe_tags,
+    vibe_tags,
     intensity,
     is_crisis,
+    risk,
+    lang_style,
     crisis_resources: is_crisis ? CRISIS_RESOURCES : [],
     toxicity,
-    source: data.source === 'ai' ? 'ai' : 'local',
+    source: 'ai',
   };
 }
 
 /**
- * Analyze a post. Never throws: on any failure it returns the local analysis.
+ * Analyze a post with Unfilterd Vibe (our own model, no API key). Never throws and
+ * never blocks posting: on a missing URL, network error, bad response or a reply
+ * slower than `timeoutMs`, it returns the local analysis, which still applies the
+ * five-language safety floor.
  */
-export async function analyzeVibe(text: string, timeoutMs = 8000): Promise<VibeAnalysis> {
+export async function analyzeVibe(text: string, timeoutMs = 3000): Promise<VibeAnalysis> {
   const trimmed = text.trim();
   if (!trimmed) return analyzeVibeLocally('');
+  const apiUrl = (import.meta.env.VITE_VIBE_API_URL ?? '').replace(/\/+$/, '');
+  if (!apiUrl) return analyzeVibeLocally(trimmed);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const { data, error } = await supabase.functions.invoke('vibe-analyze', {
-      body: { text: trimmed },
+    const res = await fetch(`${apiUrl}/analyze`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: trimmed }),
       signal: controller.signal,
     });
-    if (error) return analyzeVibeLocally(trimmed);
-    return normalizeAnalysis(data, trimmed);
+    if (!res.ok) return analyzeVibeLocally(trimmed);
+    return normalizeAnalysis(await res.json(), trimmed);
   } catch {
     return analyzeVibeLocally(trimmed);
   } finally {
