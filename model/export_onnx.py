@@ -38,6 +38,21 @@ class Wrapper(torch.nn.Module):
         return tuple(out[name] for name in OUTPUTS)
 
 
+def export_model(model: torch.nn.Module, input_ids: torch.Tensor, attention_mask: torch.Tensor, path: Path) -> None:
+    """Export to ONNX and leave `model` in eval mode. The wrapper is put in eval first:
+    a fresh module starts in train mode and torch.onnx.export restores that mode onto
+    the whole model afterwards, which silently re-enabled dropout."""
+    wrapper = Wrapper(model).eval()
+    torch.onnx.export(
+        wrapper, (input_ids, attention_mask), str(path),
+        input_names=["input_ids", "attention_mask"], output_names=OUTPUTS,
+        dynamic_axes={"input_ids": {0: "batch", 1: "seq"}, "attention_mask": {0: "batch", 1: "seq"},
+                      **{name: {0: "batch"} for name in OUTPUTS}},
+        opset_version=17, dynamo=False,
+    )
+    model.eval()
+
+
 def onnx_probs(session: ort.InferenceSession, tokenizer, texts: list[str], max_len: int) -> list[dict]:
     enc = tokenizer(texts, padding=True, truncation=True, max_length=max_len, return_tensors="np")
     raw = session.run(None, {"input_ids": enc["input_ids"].astype(np.int64),
@@ -68,15 +83,12 @@ def main() -> int:
     fp32 = ARTIFACTS / "vibe-v1-fp32.onnx"
     int8 = ARTIFACTS / "vibe-v1-int8.onnx"
 
-    dummy = predictor.tokenizer(["export sample text"], return_tensors="pt")
-    torch.onnx.export(
-        Wrapper(model), (dummy["input_ids"], dummy["attention_mask"]), str(fp32),
-        input_names=["input_ids", "attention_mask"], output_names=OUTPUTS,
-        dynamic_axes={"input_ids": {0: "batch", 1: "seq"}, "attention_mask": {0: "batch", 1: "seq"},
-                      **{name: {0: "batch"} for name in OUTPUTS}},
-        opset_version=17, dynamo=False,
-    )
-    quantize_dynamic(str(fp32), str(int8), weight_type=QuantType.QInt8)
+    dummy = predictor.tokenizer(["a short one", "a longer sample sentence so this batch needs padding"],
+                                padding=True, return_tensors="pt")
+    export_model(model, dummy["input_ids"], dummy["attention_mask"], fp32)
+    # Only the word-embedding table is quantised: it is ~70% of the size, and quantising
+    # the MatMuls cost ~5% mood agreement (measured), which is not worth it for safety.
+    quantize_dynamic(str(fp32), str(int8), weight_type=QuantType.QUInt8, op_types_to_quantize=["Gather"])
     fp32.unlink()
 
     predictor.tokenizer.backend_tokenizer.save(str(ARTIFACTS / "tokenizer.json"))
