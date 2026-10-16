@@ -9,6 +9,7 @@ import random
 from collections import Counter
 from pathlib import Path
 
+from corpus_natural import natural_rows
 from gen_corpus import generate
 from map_goemotions import load_goemotions
 from vibe_schema import normalize
@@ -17,6 +18,23 @@ HERE = Path(__file__).resolve().parent
 DATA = HERE / "data"
 TESTSETS = HERE / "testsets"
 VAL_SHARE = 0.10
+NATURAL_VAL_SHARE = 0.15
+NATURAL_DIR = HERE / "data_natural"
+GOEMOTIONS_ROWS = 6000
+
+
+def load_natural() -> list[dict]:
+    """Hand-written natural posts: data_natural/*.jsonl (writers) + corpus_natural.py."""
+    rows = []
+    for path in sorted(NATURAL_DIR.glob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                row = json.loads(line)
+                kind = row.pop("kind")
+                rows.append({**row, "source": f"nat:{kind}"})
+    for row in natural_rows():
+        rows.append({**row, "source": "nat:handwritten"})
+    return rows
 
 
 def frozen_texts() -> set[str]:
@@ -31,7 +49,7 @@ def frozen_texts() -> set[str]:
 def build(seed: int = 21) -> tuple[list[dict], list[dict]]:
     frozen = frozen_texts()
     rows, seen, dropped = [], set(), 0
-    for row in generate() + load_goemotions():
+    for row in load_natural() + generate() + load_goemotions(limit=GOEMOTIONS_ROWS):
         key = normalize(row["text"]).strip()
         if key in frozen:
             dropped += 1
@@ -50,7 +68,8 @@ def build(seed: int = 21) -> tuple[list[dict], list[dict]]:
     train, val = [], []
     for group in by_source.values():
         rng.shuffle(group)
-        cut = max(1, round(len(group) * VAL_SHARE))
+        share = NATURAL_VAL_SHARE if group[0]["source"].startswith("nat:") else VAL_SHARE
+        cut = max(1, round(len(group) * share))
         val.extend(group[:cut])
         train.extend(group[cut:])
     rng.shuffle(train)

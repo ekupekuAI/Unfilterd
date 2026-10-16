@@ -116,7 +116,7 @@ class Losses(nn.Module):
 @torch.no_grad()
 def evaluate(model: VibeModel, loader: DataLoader, device: torch.device, amp_dtype) -> dict:
     model.eval()
-    mood_ok = total = flagged = caught = 0
+    mood_ok = total = flagged = caught = ordinary = alarms = 0
     for batch in loader:
         with torch.autocast(device.type, dtype=amp_dtype, enabled=amp_dtype is not None):
             out = model(batch["input_ids"].to(device), batch["attention_mask"].to(device))
@@ -124,9 +124,29 @@ def evaluate(model: VibeModel, loader: DataLoader, device: torch.device, amp_dty
         total += len(batch["mood"])
         is_flagged = batch["risk"] > 0
         flagged += is_flagged.sum().item()
-        caught += ((out["risk"].argmax(-1).cpu() > 0) & is_flagged).sum().item()
+        predicted = out["risk"].argmax(-1).cpu() > 0
+        caught += (predicted & is_flagged).sum().item()
+        ordinary += (~is_flagged).sum().item()
+        alarms += (predicted & ~is_flagged).sum().item()
     model.train()
-    return {"mood_acc": mood_ok / max(total, 1), "risk_recall": caught / max(flagged, 1)}
+    return {"mood_acc": mood_ok / max(total, 1), "risk_recall": caught / max(flagged, 1),
+            "false_alarm": alarms / max(ordinary, 1)}
+
+
+def epoch_indices(rows: list[dict], natural_weight: int, seed: int, epoch: int) -> list[int]:
+    """Shuffled row indices for one epoch; hand-written natural posts appear natural_weight times."""
+    order = []
+    for i, row in enumerate(rows):
+        order.extend([i] * (natural_weight if str(row.get("source", "")).startswith("nat:") else 1))
+    random.Random(seed + epoch).shuffle(order)
+    return order
+
+
+def selection_rows(val_rows: list[dict]) -> list[dict]:
+    """Checkpoint selection uses natural validation posts when present: templated rows
+    share phrasing with training and over-report quality (run 1 lesson)."""
+    natural = [r for r in val_rows if str(r.get("source", "")).startswith("nat:")]
+    return natural or val_rows
 
 
 def log(out_dir: Path, **record) -> None:
@@ -147,6 +167,7 @@ def main() -> None:
     ap.add_argument("--resume", action="store_true")
     ap.add_argument("--smoke", action="store_true", help="200 rows, short sequences: a quick correctness check")
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--natural-weight", type=int, default=4, help="repeat hand-written natural posts this many times per epoch")
     ap.add_argument("--backbone", default=None, help="Hugging Face encoder id (default: vibe_model.BACKBONE)")
     args = ap.parse_args()
 
@@ -169,7 +190,7 @@ def main() -> None:
     amp_dtype = torch.bfloat16 if device.type == "cuda" else None
     tokenizer = load_tokenizer(backbone=args.backbone)
     collate = make_collate(tokenizer, max_len)
-    val_loader = DataLoader(VibeDataset(val_rows), batch_size=64, collate_fn=collate)
+    val_loader = DataLoader(VibeDataset(selection_rows(val_rows)), batch_size=64, collate_fn=collate)
 
     model = VibeModel.from_backbone(args.backbone).to(device)
     losses = Losses(train_rows).to(device)
@@ -178,7 +199,8 @@ def main() -> None:
     optimizer = torch.optim.AdamW(
         [{"params": enc_params, "lr": args.lr}, {"params": head_params, "lr": args.head_lr}], weight_decay=0.01
     )
-    steps_per_epoch = math.ceil(len(train_rows) / args.batch_size)
+    epoch_len = len(epoch_indices(train_rows, args.natural_weight, args.seed, 0))
+    steps_per_epoch = math.ceil(epoch_len / args.batch_size)
     total_steps = args.max_steps or steps_per_epoch * args.epochs
     scheduler = get_linear_schedule_with_warmup(optimizer, int(0.06 * total_steps), total_steps)
 
@@ -202,9 +224,10 @@ def main() -> None:
     def maybe_save_best() -> None:
         nonlocal best_score
         metrics = evaluate(model, val_loader, device, amp_dtype)
-        score = (round(metrics["risk_recall"], 3), round(metrics["mood_acc"], 4))
+        score = (round(metrics["risk_recall"], 2), round(metrics["mood_acc"] - metrics["false_alarm"], 4))
         log(args.out, event="eval", step=step, **metrics)
-        print(f"step {step}: val risk recall {metrics['risk_recall']:.3f}, mood acc {metrics['mood_acc']:.3f}")
+        print(f"step {step}: val risk recall {metrics['risk_recall']:.3f}, false alarm {metrics['false_alarm']:.3f}, "
+              f"mood acc {metrics['mood_acc']:.3f}")
         if score > best_score:
             best_score = score
             model.save(args.out / "best", tokenizer, extra={"step": step, **metrics})
@@ -213,8 +236,7 @@ def main() -> None:
     started = time.time()
     while step < total_steps:
         epoch = step // steps_per_epoch
-        order = list(range(len(train_rows)))
-        random.Random(args.seed + epoch).shuffle(order)
+        order = epoch_indices(train_rows, args.natural_weight, args.seed, epoch)
         skip = step - epoch * steps_per_epoch
         rows = [train_rows[i] for i in order][skip * args.batch_size:]
         loader = DataLoader(VibeDataset(rows), batch_size=args.batch_size, collate_fn=collate)

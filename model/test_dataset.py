@@ -98,3 +98,13 @@ def test_no_overlap_with_frozen_testsets(train, val):
 def test_no_duplicates(train, val):
     keys = [normalize(r["text"]).strip() for r in train + val]
     assert len(keys) == len(set(keys))
+
+
+def test_natural_posts_included(train, val):
+    natural = [r for r in train + val if r["source"].startswith("nat:")]
+    assert len(natural) >= 2000, len(natural)
+    langs = Counter(r["lang"] for r in natural)
+    for lang in LANG_STYLES:
+        assert langs[lang] >= 250, f"{lang}: {langs[lang]}"
+    val_nat = [r for r in val if r["source"].startswith("nat:")]
+    assert len(val_nat) >= 200, "natural validation rows drive checkpoint selection"
