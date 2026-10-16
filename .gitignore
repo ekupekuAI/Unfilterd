@@ -31,3 +31,4 @@ model/artifacts/
 model/hf_cache/
 __pycache__/
 .pytest_cache/
+model/vibe-v1-bundle.tar.gz
