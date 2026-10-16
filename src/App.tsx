@@ -29,6 +29,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { IntroGate } from './components/intro/IntroGate';
 import { BottomNav } from './components/BottomNav';
 import { TopNav } from './components/TopNav';
+import { CheckInHost } from './components/vibe/CheckInHost';
 import { LoadingSpinner, EmptyState } from './components/Layout';
 import { ShieldAlert } from 'lucide-react';
 
@@ -48,6 +49,7 @@ function ProtectedRoute() {
   return (
     <>
       <TopNav />
+      <CheckInHost />
       <AnimatedOutlet />
       <BottomNav />
     </>

@@ -5,22 +5,12 @@ import { supabase } from '../lib/supabase';
 import type { Mood } from '../types';
 import { MOOD_CONFIG } from '../types';
 import { PageContainer } from '../components/Layout';
-import { Loader2, X, Sparkles, AlertTriangle, Save, ShieldAlert, ImagePlus, Upload, Trash2, HeartHandshake } from 'lucide-react';
+import { Loader2, X, Sparkles, Save, ShieldAlert, ImagePlus, Upload, Trash2, HeartHandshake } from 'lucide-react';
 import { analyzeVibe, VIBE_TAGS, VIBE_TAG_LABELS, type VibeAnalysis, type VibeTag } from '../lib/vibe';
+import { CHECKIN_EVENT } from '../components/vibe/CheckInHost';
 import type { MediaType } from '../types';
 
 const MOODS = Object.entries(MOOD_CONFIG) as [Mood, typeof MOOD_CONFIG[Mood]][];
-
-const TOXICITY_KEYWORDS = [
-  'kill', 'die', 'murder', 'threat', 'suicide', 'harm', 'attack',
-  'rape', 'assault', 'bomb', 'terrorist', 'shoot', 'stab',
-];
-
-function detectToxicity(text: string): { isToxic: boolean; keywords: string[] } {
-  const lower = text.toLowerCase();
-  const found = TOXICITY_KEYWORDS.filter(kw => lower.includes(kw));
-  return { isToxic: found.length > 0, keywords: found };
-}
 
 function detectMood(text: string): Mood | null {
   const lower = text.toLowerCase();
@@ -65,7 +55,6 @@ export function CreatePostPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [toxicityWarning, setToxicityWarning] = useState(false);
   const [suggestedMood, setSuggestedMood] = useState<Mood | null>(null);
   const [publishError, setPublishError] = useState('');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -129,8 +118,6 @@ export function CreatePostPage() {
   }, [media]);
 
   const updateMoodSignals = (text: string) => {
-    const { isToxic } = detectToxicity(text);
-    setToxicityWarning(isToxic);
     setSuggestedMood(detectMood(text));
   };
 
@@ -221,24 +208,23 @@ export function CreatePostPage() {
     setSubmitting(true);
     const analysis = await readVibe();
     const aiSeverity = analysis.toxicity.isToxic ? analysis.toxicity.severity : undefined;
-    const tags = vibeTags.length ? vibeTags : analysis.vibe_tags;
+    // Removed chips stay removed (an empty list is a valid choice); the DB falls back to mood for matching.
+    const chipsReviewed = Boolean(vibe) && vibeText === currentText;
+    const tags = chipsReviewed ? vibeTags : analysis.vibe_tags;
     const finalMood = mood === 'random' && analysis.mood !== 'random' ? analysis.mood : mood;
     const matchRequested = wantsMatch && !analysis.is_crisis && profile?.open_to_matching !== false;
     const vibeFields = {
       vibe_tags: tags,
       vibe_intensity: analysis.intensity,
       is_crisis: analysis.is_crisis,
+      risk_level: analysis.risk,
+      toxicity_severity: aiSeverity ?? 'none',
       wants_match: matchRequested,
     };
     if (aiSeverity === 'high' && !showHighSeverityConfirm) {
       setSubmitting(false);
-      setPublishError('This post appears highly harmful. Please review before publishing.');
-      return;
-    }
-    if ((aiSeverity === 'low' || aiSeverity === 'medium') && toxicityWarning && !showHighSeverityConfirm) {
-      setSubmitting(false);
       setShowHighSeverityConfirm(true);
-      setPublishError('Potentially harmful language detected. Click publish again to confirm.');
+      setPublishError('This reads like it targets someone. If you publish, it stays hidden until a moderator reviews it. Edit it, or press publish again to send it for review.');
       return;
     }
     const request = editingPostId
@@ -261,6 +247,25 @@ export function CreatePostPage() {
     }
     localStorage.removeItem(draftKey);
     if (!data) return;
+    if (vibe && chipsReviewed && !editingPostId) {
+      const removed = vibe.vibe_tags.filter(tag => !tags.includes(tag));
+      const added = tags.filter(tag => !vibe.vibe_tags.includes(tag));
+      if (removed.length || added.length) {
+        // anonymous: no user id, no post text
+        void supabase.from('vibe_feedback').insert({
+          predicted_tags: vibe.vibe_tags,
+          corrected_tags: tags,
+          lang_style: analysis.lang_style,
+          length_bucket: currentText.length < 80 ? 'short' : currentText.length < 300 ? 'medium' : 'long',
+        });
+      }
+    }
+    if (analysis.risk !== 'none' && !editingPostId) {
+      await supabase.from('vibe_checkins').update({ lang_style: analysis.lang_style }).eq('post_id', data.id);
+      window.dispatchEvent(new Event(CHECKIN_EVENT));
+      navigate(`/post/${data.id}`, { replace: true });
+      return;
+    }
     if (matchRequested && !editingPostId) {
       navigate(`/matches?find=${data.id}`, { replace: true });
     } else {
@@ -476,18 +481,6 @@ export function CreatePostPage() {
             <div className="space-y-1">
               <p className="text-sm font-medium text-white">Support resources</p>
               {crisisResources.map(line => <p key={line} className="text-xs text-gray-400">{line}</p>)}
-            </div>
-          </div>
-        )}
-
-        {toxicityWarning && (
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-warning/10 border border-warning/20">
-            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-warning">Content Warning</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Your post may contain harmful or threatening language. Please reconsider your words before posting.
-              </p>
             </div>
           </div>
         )}

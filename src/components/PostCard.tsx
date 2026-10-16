@@ -6,6 +6,7 @@ import { Avatar } from './Avatar';
 import { MoodBadge } from './MoodBadge';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { SensitiveCover } from './vibe/SensitiveCover';
 import { ReportModal } from './ReportModal';
 import { tagLabel } from '../lib/vibe';
 
@@ -163,16 +164,18 @@ export function PostCard({ post, onLikeToggle, onSaveToggle, onDeleted, compact 
                 ))}
               </div>
             )}
-            <Link to={`/post/${post.id}`} className="block mt-2 group">
-              <h3 className="font-semibold text-white group-hover:text-primary-50 transition-colors">
-                {post.title}
-              </h3>
-              {!compact && (
-                <p className="text-sm text-gray-300 mt-1 line-clamp-3 whitespace-pre-wrap">
-                  {post.content}
-                </p>
-              )}
-            </Link>
+            <SensitiveCover active={Boolean(post.is_sensitive) && user?.id !== post.user_id}>
+              <Link to={`/post/${post.id}`} className="block mt-2 group">
+                <h3 className="font-semibold text-white group-hover:text-primary-50 transition-colors">
+                  {post.title}
+                </h3>
+                {!compact && (
+                  <p className="text-sm text-gray-300 mt-1 line-clamp-3 whitespace-pre-wrap">
+                    {post.content}
+                  </p>
+                )}
+              </Link>
+            </SensitiveCover>
           </div>
           <div className="relative">
             <button

@@ -96,6 +96,13 @@ export interface Post {
   /** 0-100. */
   vibe_intensity?: number;
   is_crisis?: boolean;
+  /** none | possible | high — set by the model, floored by the database. */
+  risk_level?: 'none' | 'possible' | 'high';
+  /** High-risk posts are shown behind a "Sensitive — tap to view" cover. */
+  is_sensitive?: boolean;
+  toxicity_severity?: 'none' | 'low' | 'medium' | 'high';
+  /** Held from the feed until an admin reviews it. */
+  is_hidden?: boolean;
   /** The author asked to be matched with someone feeling this too. */
   wants_match?: boolean;
   created_at: string;

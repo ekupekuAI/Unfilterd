@@ -54,6 +54,9 @@ check('no check-in for an ordinary post', noCi.rows.length === 0);
 await as(U.A, `UPDATE public.vibe_checkins SET status = 'joking', answered_at = now() WHERE post_id = $1`, [p1.id]);
 const after = (await db.query(`SELECT risk_level, wants_match FROM public.posts WHERE id = $1`, [p1.id])).rows[0];
 check('answering "just joking" does not change the post', after.risk_level === 'possible' && after.wants_match === false);
+await as(U.A, `UPDATE public.vibe_checkins SET lang_style = 'hinglish' WHERE post_id = $1`, [p1.id]);
+check('author can set the check-in language', (await as(U.A,
+  `SELECT lang_style FROM public.vibe_checkins WHERE post_id = $1`, [p1.id])).rows[0]?.lang_style === 'hinglish');
 check('B cannot answer A\'s check-in', (await as(U.B,
   `UPDATE public.vibe_checkins SET status = 'dismissed' WHERE post_id = $1 RETURNING id`, [p1.id])).rows.length === 0);
 

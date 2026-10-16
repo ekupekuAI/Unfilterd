@@ -314,6 +314,8 @@ CREATE TABLE IF NOT EXISTS public.vibe_checkins (
   status text NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'joking', 'overwhelmed', 'not_okay', 'dismissed')),
   dismiss_count integer NOT NULL DEFAULT 0 CHECK (dismiss_count >= 0),
+  -- set by the app after posting so the card can reply in the post's language
+  lang_style text NOT NULL DEFAULT 'en' CHECK (lang_style IN ('en', 'hinglish', 'telugu', 'tenglish', 'devanagari')),
   created_at timestamptz NOT NULL DEFAULT now(),
   answered_at timestamptz
 );

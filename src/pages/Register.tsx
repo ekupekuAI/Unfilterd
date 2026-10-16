@@ -40,6 +40,7 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isAdult, setIsAdult] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +61,10 @@ export function RegisterPage() {
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+    if (!isAdult) {
+      setError('Unfilterd is for people aged 18 and over.');
       return;
     }
 
@@ -161,6 +166,17 @@ export function RegisterPage() {
                 <p className="text-xs text-danger mt-1">Passwords do not match</p>
               )}
             </div>
+
+            <label className="flex items-start gap-3 cursor-pointer text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={isAdult}
+                onChange={e => setIsAdult(e.target.checked)}
+                className="mt-0.5 accent-primary"
+                required
+              />
+              <span>I'm 18 or older</span>
+            </label>
 
             <button
               type="submit"

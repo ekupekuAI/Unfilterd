@@ -12,6 +12,15 @@ type RecentUser = {
   suspension_reason: string;
 };
 
+type HeldPost = {
+  id: string;
+  title: string;
+  content: string;
+  toxicity_severity: string;
+  is_hidden: boolean;
+  created_at: string;
+};
+
 type ModerationQueueItem = {
   id: string;
   kind: 'post' | 'comment' | 'user';
@@ -28,6 +37,7 @@ export function AdminPage() {
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [queue, setQueue] = useState<ModerationQueueItem[]>([]);
+  const [held, setHeld] = useState<HeldPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'overview' | 'reports'>('overview');
   const [error, setError] = useState('');
@@ -80,8 +90,26 @@ export function AdminPage() {
       description: row.reason || '',
       created_at: row.created_at,
     })) as ModerationQueueItem[]));
+    // Posts the vibe model routed to review: high = hidden until reviewed, medium = published + queued.
+    const { data: heldRows } = await supabase
+      .from('posts')
+      .select('id, title, content, toxicity_severity, is_hidden, created_at')
+      .eq('is_flagged', true)
+      .is('reviewed_at', null)
+      .order('created_at', { ascending: false })
+      .limit(25);
+    setHeld((heldRows ?? []) as HeldPost[]);
     setLoading(false);
   }, []);
+
+  const reviewPost = async (postId: string, approve: boolean) => {
+    const { error: reviewError } = await supabase.rpc('review_post', { p_post_id: postId, p_approve: approve });
+    if (reviewError) {
+      setError(reviewError.message);
+      return;
+    }
+    setHeld(prev => prev.filter(p => p.id !== postId));
+  };
 
   useEffect(() => {
     if (!profile) return;
@@ -250,6 +278,31 @@ export function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="bg-surface rounded-xl p-4">
+            <h3 className="text-sm font-medium text-white mb-3">Held / flagged posts ({held.length})</h3>
+            {held.length === 0 ? (
+              <p className="text-xs text-gray-500">Nothing waiting for review.</p>
+            ) : (
+              <div className="space-y-2">
+                {held.map(post => (
+                  <div key={post.id} className="rounded-lg bg-surface-50 px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-white truncate">{post.title}</p>
+                      <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] ${post.is_hidden ? 'bg-danger/20 text-danger' : 'bg-warning/20 text-warning'}`}>
+                        {post.is_hidden ? 'hidden' : 'published'} · {post.toxicity_severity}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-400 line-clamp-2">{post.content}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => reviewPost(post.id, true)} className="px-3 py-1.5 rounded-lg text-xs bg-success/20 text-success">Publish</button>
+                      <button onClick={() => reviewPost(post.id, false)} className="px-3 py-1.5 rounded-lg text-xs bg-danger/20 text-danger">Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-surface rounded-xl p-4">
