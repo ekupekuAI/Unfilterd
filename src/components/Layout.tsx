@@ -7,7 +7,7 @@ interface LayoutProps {
 export function PageContainer({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-[#07060F]">
-      <div className="max-w-2xl mx-auto px-4 pb-24 pt-4 md:pb-8">
+      <div className="max-w-2xl mx-auto px-4 pb-28 pt-4">
         {children}
       </div>
     </div>

@@ -135,7 +135,7 @@ const TAG_KEYWORDS: Record<VibeTag, string[]> = {
   grief: ['died', 'death', 'passed away', 'grief', 'funeral', 'lost my', 'miss them'],
   money: ['money', 'broke', 'debt', 'rent', 'salary', 'afford', 'loan', 'bills'],
   health: ['sick', 'illness', 'diagnosed', 'hospital', 'pain', 'doctor', 'therapy', 'medication'],
-  identity: ['who i am', 'identity', 'coming out', 'gay', 'queer', 'trans', 'don\'t know myself', 'lost myself'],
+  identity: ['who i am', 'identity', 'coming out', 'came out', 'gay', 'queer', 'trans', 'don\'t know myself', 'lost myself'],
   overthinking: ['overthinking', 'overthink', 'can\'t stop thinking', 'in my head', 'spiraling', 'ruminating'],
   hope: ['hope', 'hopeful', 'better days', 'getting better', 'looking forward', 'maybe things'],
   gratitude: ['grateful', 'thankful', 'blessed', 'appreciate', 'lucky'],
@@ -180,14 +180,20 @@ export function detectCrisisLocally(text: string): boolean {
   return applyRiskFloor(text, 'none') !== 'none';
 }
 
-/** Keyword fallback used when the edge function is unreachable. */
+/** Whole-word match, so "gay" doesn't fire inside Hinglish "gaya" or "mad" inside "made". */
+function hasWord(lowerText: string, keyword: string): boolean {
+  const kw = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![\\p{L}\\p{N}])${kw}(?![\\p{L}\\p{N}])`, 'u').test(lowerText);
+}
+
+/** Keyword fallback used when the model server is unreachable or not configured. */
 export function analyzeVibeLocally(text: string): VibeAnalysis {
   const lower = text.toLowerCase();
 
   let mood: Mood = 'random';
   let bestMoodScore = 0;
   for (const [candidate, keywords] of Object.entries(MOOD_KEYWORDS) as [Mood, string[]][]) {
-    const score = keywords.reduce((sum, kw) => (lower.includes(kw) ? sum + kw.length : sum), 0);
+    const score = keywords.reduce((sum, kw) => (hasWord(lower, kw) ? sum + kw.length : sum), 0);
     if (score > bestMoodScore) {
       bestMoodScore = score;
       mood = candidate;
@@ -195,7 +201,7 @@ export function analyzeVibeLocally(text: string): VibeAnalysis {
   }
 
   const tagScores = (Object.entries(TAG_KEYWORDS) as [VibeTag, string[]][])
-    .map(([tag, keywords]) => [tag, keywords.filter(kw => lower.includes(kw)).length] as const)
+    .map(([tag, keywords]) => [tag, keywords.filter(kw => hasWord(lower, kw)).length] as const)
     .filter(([, hits]) => hits > 0)
     .sort((a, b) => b[1] - a[1]);
   const vibe_tags = tagScores.slice(0, 4).map(([tag]) => tag);

@@ -153,7 +153,7 @@ export function ChatPage() {
 
   return (
     <div className="min-h-screen bg-[#07060F] flex flex-col">
-      <div className="max-w-2xl w-full mx-auto flex-1 flex flex-col px-4 pt-4 pb-24 md:pb-6">
+      <div className="max-w-2xl w-full mx-auto flex-1 flex flex-col px-4 pt-4 pb-28">
         <div className="flex items-center gap-3 pb-3 border-b border-white/5">
           <button onClick={() => navigate('/matches')} className="p-2 -ml-2 rounded-lg hover:bg-white/5 text-gray-400" aria-label="Back to matches">
             <ArrowLeft className="w-5 h-5" />

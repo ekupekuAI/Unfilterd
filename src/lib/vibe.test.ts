@@ -98,6 +98,14 @@ describe('local fallback', () => {
     expect(analyzeVibeLocally('I am going to kill myself tonight').risk).toBe('high');
   });
 
+  it('matches keywords as whole words, not inside other words', () => {
+    // "gay" inside Hinglish "gaya", "ex " inside "next", "mad" inside "made"
+    const hinglish = analyzeVibeLocally('exam fail ho gaya, sab khatam sa lag raha');
+    expect(hinglish.vibe_tags).not.toContain('identity');
+    expect(analyzeVibeLocally('made a plan for next week').mood).not.toBe('angry');
+    expect(analyzeVibeLocally('I came out to my parents today').vibe_tags).toContain('identity');
+  });
+
   it('keeps ordinary posts at none', () => {
     const local = analyzeVibeLocally('kal exam hai yaar, thoda tension');
     expect(local.risk).toBe('none');

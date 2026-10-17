@@ -414,7 +414,7 @@ export function CreatePostPage() {
                 <Sparkles className="w-4 h-4 text-primary" /> Your vibe
               </p>
               <p className="text-xs text-gray-400">
-                {vibe ? `Intensity ${vibe.intensity}/100${vibe.source === 'local' ? ' · quick read' : ''}` : 'Let AI read the feeling in your post, then adjust the tags.'}
+                {vibe ? `Intensity ${vibe.intensity}/100${vibe.source === 'local' ? ' · quick read' : ''}` : 'Read the feeling in your post, then adjust the tags.'}
               </p>
             </div>
             <button
@@ -446,6 +446,11 @@ export function CreatePostPage() {
               {showAllTags ? 'Fewer' : 'More tags'}
             </button>
           </div>
+          {vibe && (
+            <p className="text-[11px] text-gray-500">
+              If you change the suggested tags, we save only which tags you changed, never your post or your name, to make suggestions better.
+            </p>
+          )}
 
           {!editingPostId && (
             vibe?.is_crisis ? (
