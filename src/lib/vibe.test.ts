@@ -112,3 +112,40 @@ describe('local fallback', () => {
     expect(local.is_crisis).toBe(false);
   });
 });
+
+describe('final-review fixes', () => {
+  it('normalises line breaks, repeated spaces, punctuation and full-width text (I8)', () => {
+    for (const text of ['i want to\ndie', 'i want  to   die', 'I WANT TO DIE!!!', 'ＫＩＬＬ ＭＹＳＥＬＦ', 'selfharm again']) {
+      expect(analyzeVibeLocally(text).risk).not.toBe('none');
+    }
+  });
+
+  it('catches the phrases the old list missed (C1)', () => {
+    for (const text of ["I don't want to live anymore", 'mujhe marna hai', 'kms', 'मुझे मरना है']) {
+      expect(analyzeVibeLocally(text).risk).not.toBe('none');
+    }
+    expect(analyzeVibeLocally('I will kill myself tonight').risk).toBe('high');
+    // ambiguous without time/method/plan -> gentle check-in, not an emergency
+    expect(analyzeVibeLocally("if I fail again I'm literally going to kill myself lol").risk).toBe('possible');
+    expect(analyzeVibeLocally('this assignment is killing me lol').risk).toBe('none');
+  });
+
+  it('sends a single threat to review (I2)', () => {
+    const t = analyzeVibeLocally('i know where you live');
+    expect(t.toxicity.isToxic).toBe(true);
+    expect(['medium', 'high']).toContain(t.toxicity.severity);
+  });
+
+  it('uses no regex lookbehind, which older iPhones cannot parse (I7)', async () => {
+    const source = (await import('./vibe.ts?raw')).default;
+    expect(source).not.toMatch(/\(\?<[!=]/);
+  });
+});
+
+describe('normalisation parity', () => {
+  it('matches the shared cases used by the model and the database', async () => {
+    const { normalizeForSafety } = await import('./vibe');
+    const cases = (await import('../../shared/normalize_cases.json')).default as [string, string][];
+    for (const [input, expected] of cases) expect(normalizeForSafety(input)).toBe(expected);
+  });
+});

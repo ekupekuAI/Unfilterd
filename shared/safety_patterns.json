@@ -1,144 +1,1001 @@
 {
-  "_comment": "Single source of truth for the Unfilterd safety layer. Compiled into the inference server (model/vibe_schema.py), the client fallback (src/lib/vibe.ts) and the database trigger (scripts/gen-pattern-sql.mjs). Matching is case-insensitive substring after NFC normalisation and apostrophe folding. 'crisis' raises risk to at least 'possible'; 'crisis_explicit' (first-person, unambiguous) raises it to 'high'; nothing here ever lowers risk. 'toxicity' only flags a post for review; it never punishes on its own.",
+  "_comment": "Single source of truth for the Unfilterd safety layer. Compiled into the inference server (model/vibe_schema.py), the client fallback (src/lib/vibe.ts) and the database trigger (scripts/gen-pattern-sql.mjs). Matching is case-insensitive substring after NFC normalisation and apostrophe folding. 'crisis' raises risk to at least 'possible'; 'crisis_explicit' (first-person, unambiguous) raises it to 'high'; nothing here ever lowers risk. 'toxicity' routes a post to review (threat, doxxing, harassment and sexual harassment at least 'medium'); it never punishes on its own.",
   "crisis": [
-    {"pattern": "want to die", "lang": "en"},
-    {"pattern": "wanna die", "lang": "en"},
-    {"pattern": "end my life", "lang": "en"},
-    {"pattern": "end it all", "lang": "en"},
-    {"pattern": "kill myself", "lang": "en"},
-    {"pattern": "killing myself", "lang": "en"},
-    {"pattern": "suicide", "lang": "en"},
-    {"pattern": "suicidal", "lang": "en"},
-    {"pattern": "self harm", "lang": "en"},
-    {"pattern": "self-harm", "lang": "en"},
-    {"pattern": "hurt myself", "lang": "en"},
-    {"pattern": "cutting myself", "lang": "en"},
-    {"pattern": "no reason to live", "lang": "en"},
-    {"pattern": "can't go on", "lang": "en"},
-    {"pattern": "cant go on", "lang": "en"},
-    {"pattern": "better off dead", "lang": "en"},
-    {"pattern": "better off without me", "lang": "en"},
-    {"pattern": "not worth living", "lang": "en"},
-    {"pattern": "want to disappear", "lang": "en"},
-    {"pattern": "don't want to wake up", "lang": "en"},
-    {"pattern": "dont want to wake up", "lang": "en"},
-    {"pattern": "wish i was dead", "lang": "en"},
-    {"pattern": "wish i were dead", "lang": "en"},
-    {"pattern": "take my own life", "lang": "en"},
-    {"pattern": "overdose", "lang": "en"},
-
-    {"pattern": "mar jaunga", "lang": "hinglish"},
-    {"pattern": "mar jaungi", "lang": "hinglish"},
-    {"pattern": "mar jaana chahta", "lang": "hinglish"},
-    {"pattern": "mar jaana chahti", "lang": "hinglish"},
-    {"pattern": "marna chahta", "lang": "hinglish"},
-    {"pattern": "marna chahti", "lang": "hinglish"},
-    {"pattern": "khud ko maar", "lang": "hinglish"},
-    {"pattern": "suicide kar", "lang": "hinglish"},
-    {"pattern": "jeena nahi chahta", "lang": "hinglish"},
-    {"pattern": "jeena nahi chahti", "lang": "hinglish"},
-    {"pattern": "jeene ka mann nahi", "lang": "hinglish"},
-    {"pattern": "zinda nahi rehna", "lang": "hinglish"},
-    {"pattern": "sab khatam kar du", "lang": "hinglish"},
-    {"pattern": "khud ko hurt", "lang": "hinglish"},
-    {"pattern": "nas kaat", "lang": "hinglish"},
-    {"pattern": "zindagi khatam", "lang": "hinglish"},
-    {"pattern": "jee ke kya fayda", "lang": "hinglish"},
-    {"pattern": "duniya chhod", "lang": "hinglish"},
-
-    {"pattern": "చచ్చిపోవాలని", "lang": "telugu"},
-    {"pattern": "చచ్చిపోతా", "lang": "telugu"},
-    {"pattern": "చనిపోవాలని", "lang": "telugu"},
-    {"pattern": "చనిపోతాను", "lang": "telugu"},
-    {"pattern": "చావాలని", "lang": "telugu"},
-    {"pattern": "ఆత్మహత్య", "lang": "telugu"},
-    {"pattern": "బ్రతకాలని లేదు", "lang": "telugu"},
-    {"pattern": "బతకాలని లేదు", "lang": "telugu"},
-    {"pattern": "బ్రతకడం ఇష్టం లేదు", "lang": "telugu"},
-    {"pattern": "నన్ను నేను చంపుకుంటా", "lang": "telugu"},
-    {"pattern": "చంపుకోవాలని", "lang": "telugu"},
-    {"pattern": "జీవితం ముగించాలని", "lang": "telugu"},
-    {"pattern": "ఇక బతకలేను", "lang": "telugu"},
-    {"pattern": "ఇక బ్రతకలేను", "lang": "telugu"},
-    {"pattern": "నా జీవితాన్ని ముగిస్తా", "lang": "telugu"},
-    {"pattern": "చచ్చిపోవడమే మంచిది", "lang": "telugu"},
-
-    {"pattern": "chachipovali", "lang": "tenglish"},
-    {"pattern": "chachipotha", "lang": "tenglish"},
-    {"pattern": "chanipovali", "lang": "tenglish"},
-    {"pattern": "chanipotha", "lang": "tenglish"},
-    {"pattern": "chavalani undi", "lang": "tenglish"},
-    {"pattern": "chavali anipistundi", "lang": "tenglish"},
-    {"pattern": "bratakalani ledu", "lang": "tenglish"},
-    {"pattern": "bathakalani ledu", "lang": "tenglish"},
-    {"pattern": "brathakalani ledu", "lang": "tenglish"},
-    {"pattern": "bathakadam istam ledu", "lang": "tenglish"},
-    {"pattern": "suicide chesukunta", "lang": "tenglish"},
-    {"pattern": "suicide chesukovali", "lang": "tenglish"},
-    {"pattern": "aathmahatya", "lang": "tenglish"},
-    {"pattern": "atmahatya", "lang": "tenglish"},
-    {"pattern": "nannu nenu champukunta", "lang": "tenglish"},
-    {"pattern": "champukovali", "lang": "tenglish"},
-    {"pattern": "ika bathakalenu", "lang": "tenglish"},
-
-    {"pattern": "मर जाऊंगा", "lang": "devanagari"},
-    {"pattern": "मर जाऊँगा", "lang": "devanagari"},
-    {"pattern": "मर जाऊंगी", "lang": "devanagari"},
-    {"pattern": "मर जाना चाहता", "lang": "devanagari"},
-    {"pattern": "मर जाना चाहती", "lang": "devanagari"},
-    {"pattern": "मरना चाहता", "lang": "devanagari"},
-    {"pattern": "मरना चाहती", "lang": "devanagari"},
-    {"pattern": "आत्महत्या", "lang": "devanagari"},
-    {"pattern": "खुद को मार", "lang": "devanagari"},
-    {"pattern": "जीना नहीं चाहता", "lang": "devanagari"},
-    {"pattern": "जीना नहीं चाहती", "lang": "devanagari"},
-    {"pattern": "जीने का मन नहीं", "lang": "devanagari"},
-    {"pattern": "ज़िंदा नहीं रहना", "lang": "devanagari"},
-    {"pattern": "जिंदा नहीं रहना", "lang": "devanagari"},
-    {"pattern": "सब खत्म कर दूं", "lang": "devanagari"},
-    {"pattern": "खुद को चोट", "lang": "devanagari"},
-    {"pattern": "ज़िंदगी खत्म", "lang": "devanagari"},
-    {"pattern": "जिंदगी खत्म", "lang": "devanagari"}
+    {
+      "pattern": "want to die",
+      "lang": "en"
+    },
+    {
+      "pattern": "wanna die",
+      "lang": "en"
+    },
+    {
+      "pattern": "end my life",
+      "lang": "en"
+    },
+    {
+      "pattern": "end it all",
+      "lang": "en"
+    },
+    {
+      "pattern": "kill myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "killing myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "suicide",
+      "lang": "en"
+    },
+    {
+      "pattern": "suicidal",
+      "lang": "en"
+    },
+    {
+      "pattern": "self harm",
+      "lang": "en"
+    },
+    {
+      "pattern": "self-harm",
+      "lang": "en"
+    },
+    {
+      "pattern": "hurt myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "cutting myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "no reason to live",
+      "lang": "en"
+    },
+    {
+      "pattern": "can't go on",
+      "lang": "en"
+    },
+    {
+      "pattern": "cant go on",
+      "lang": "en"
+    },
+    {
+      "pattern": "better off dead",
+      "lang": "en"
+    },
+    {
+      "pattern": "better off without me",
+      "lang": "en"
+    },
+    {
+      "pattern": "not worth living",
+      "lang": "en"
+    },
+    {
+      "pattern": "want to disappear",
+      "lang": "en"
+    },
+    {
+      "pattern": "don't want to wake up",
+      "lang": "en"
+    },
+    {
+      "pattern": "dont want to wake up",
+      "lang": "en"
+    },
+    {
+      "pattern": "wish i was dead",
+      "lang": "en"
+    },
+    {
+      "pattern": "wish i were dead",
+      "lang": "en"
+    },
+    {
+      "pattern": "take my own life",
+      "lang": "en"
+    },
+    {
+      "pattern": "overdose",
+      "lang": "en"
+    },
+    {
+      "pattern": "mar jaunga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jaungi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jaana chahta",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jaana chahti",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "marna chahta",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "marna chahti",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "khud ko maar",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "suicide kar",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jeena nahi chahta",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jeena nahi chahti",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jeene ka mann nahi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "zinda nahi rehna",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "sab khatam kar du",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "khud ko hurt",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "nas kaat",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "zindagi khatam",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jee ke kya fayda",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "duniya chhod",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "చచ్చిపోవాలని",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చచ్చిపోతా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చనిపోవాలని",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చనిపోతాను",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చావాలని",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఆత్మహత్య",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "బ్రతకాలని లేదు",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "బతకాలని లేదు",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "బ్రతకడం ఇష్టం లేదు",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "నన్ను నేను చంపుకుంటా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చంపుకోవాలని",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "జీవితం ముగించాలని",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఇక బతకలేను",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఇక బ్రతకలేను",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "నా జీవితాన్ని ముగిస్తా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చచ్చిపోవడమే మంచిది",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "chachipovali",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chachipotha",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chanipovali",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chanipotha",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chavalani undi",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chavali anipistundi",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "bratakalani ledu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "bathakalani ledu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "brathakalani ledu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "bathakadam istam ledu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "suicide chesukunta",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "suicide chesukovali",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "aathmahatya",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "atmahatya",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "nannu nenu champukunta",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "champukovali",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "ika bathakalenu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "मर जाऊंगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मर जाऊँगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मर जाऊंगी",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मर जाना चाहता",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मर जाना चाहती",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मरना चाहता",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मरना चाहती",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "आत्महत्या",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "खुद को मार",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जीना नहीं चाहता",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जीना नहीं चाहती",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जीने का मन नहीं",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "ज़िंदा नहीं रहना",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जिंदा नहीं रहना",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "सब खत्म कर दूं",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "खुद को चोट",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "ज़िंदगी खत्म",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जिंदगी खत्म",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "don't want to live",
+      "lang": "en"
+    },
+    {
+      "pattern": "dont want to live",
+      "lang": "en"
+    },
+    {
+      "pattern": "do not want to live",
+      "lang": "en"
+    },
+    {
+      "pattern": "don't want to be alive",
+      "lang": "en"
+    },
+    {
+      "pattern": "dont want to be alive",
+      "lang": "en"
+    },
+    {
+      "pattern": "do not want to be alive",
+      "lang": "en"
+    },
+    {
+      "pattern": "kms",
+      "lang": "en"
+    },
+    {
+      "pattern": "unalive",
+      "lang": "en"
+    },
+    {
+      "pattern": "kill my self",
+      "lang": "en"
+    },
+    {
+      "pattern": "selfharm",
+      "lang": "en"
+    },
+    {
+      "pattern": "self harming",
+      "lang": "en"
+    },
+    {
+      "pattern": "cut myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "slit my wrist",
+      "lang": "en"
+    },
+    {
+      "pattern": "end myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "want to end it",
+      "lang": "en"
+    },
+    {
+      "pattern": "want it all to end",
+      "lang": "en"
+    },
+    {
+      "pattern": "wish i could die",
+      "lang": "en"
+    },
+    {
+      "pattern": "rather be dead",
+      "lang": "en"
+    },
+    {
+      "pattern": "wish i was never born",
+      "lang": "en"
+    },
+    {
+      "pattern": "no point living",
+      "lang": "en"
+    },
+    {
+      "pattern": "no point in living",
+      "lang": "en"
+    },
+    {
+      "pattern": "tired of living",
+      "lang": "en"
+    },
+    {
+      "pattern": "tired of being alive",
+      "lang": "en"
+    },
+    {
+      "pattern": "life isn't worth",
+      "lang": "en"
+    },
+    {
+      "pattern": "life is not worth",
+      "lang": "en"
+    },
+    {
+      "pattern": "everyone would be better off",
+      "lang": "en"
+    },
+    {
+      "pattern": "nobody would miss me",
+      "lang": "en"
+    },
+    {
+      "pattern": "won't be here tomorrow",
+      "lang": "en"
+    },
+    {
+      "pattern": "wont be here tomorrow",
+      "lang": "en"
+    },
+    {
+      "pattern": "sleep forever",
+      "lang": "en"
+    },
+    {
+      "pattern": "never wake up",
+      "lang": "en"
+    },
+    {
+      "pattern": "jump off a",
+      "lang": "en"
+    },
+    {
+      "pattern": "thinking about dying",
+      "lang": "en"
+    },
+    {
+      "pattern": "thoughts of dying",
+      "lang": "en"
+    },
+    {
+      "pattern": "marna hai",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jaana hai",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jana hai",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jau",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "mar jaun",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "khudkushi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "khudkhushi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jeena nahi hai",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "apni jaan de",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jaan de dunga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jaan de dungi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "phansi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "fansi laga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "neend ki goliyan",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "goliyan kha",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "kood jaunga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "kood jaungi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "marne ka mann",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "marne ka khayal",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "jeene ki wajah nahi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "मरना है",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मर जाऊं",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मर जाना है",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "खुदकुशी",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जीना नहीं है",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जान दे दूंगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जान दे दूंगी",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "फांसी",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "नींद की गोलियां",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "कूद जाऊंगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मरने का मन",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "मरने का ख्याल",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "जीने की वजह नहीं",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "చచ్చిపోవాలి",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చనిపోవాలి",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "చచ్చిపోదామని",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఉరి వేసుకుంటా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఉరేసుకుంటా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "మాత్రలు మింగుతా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "నిద్ర మాత్రలు",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఈ లోకంలో ఉండను",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "బతకాలని అనిపించట్లేదు",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "uri vesukunta",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "uri vesukuntanu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "pranam teesukunta",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "pranam teesukovali",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "mathralu mingutha",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "ika undanu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "ee lokam lo undanu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chachipovalani",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "chanipovalani",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "bathakalani anipinchatledu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "will kill myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "going to end my life",
+      "lang": "en"
+    },
+    {
+      "pattern": "gonna kill myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "going to kill myself",
+      "lang": "en"
+    }
   ],
   "crisis_explicit": [
-    {"pattern": "i am going to kill myself", "lang": "en"},
-    {"pattern": "i'm going to kill myself", "lang": "en"},
-    {"pattern": "im going to kill myself", "lang": "en"},
-    {"pattern": "i will kill myself tonight", "lang": "en"},
-    {"pattern": "going to end my life tonight", "lang": "en"},
-    {"pattern": "i have decided to end my life", "lang": "en"},
-    {"pattern": "this is my suicide note", "lang": "en"},
-    {"pattern": "i'm going to end it tonight", "lang": "en"},
-    {"pattern": "aaj raat khud ko maar dunga", "lang": "hinglish"},
-    {"pattern": "main suicide karne wala hu", "lang": "hinglish"},
-    {"pattern": "ivala rathri chachipothanu", "lang": "tenglish"},
-    {"pattern": "ఈ రోజు రాత్రి చనిపోతాను", "lang": "telugu"},
-    {"pattern": "आज रात आत्महत्या कर लूंगा", "lang": "devanagari"}
+    {
+      "pattern": "i am going to kill myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "i'm going to kill myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "im going to kill myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "i will kill myself tonight",
+      "lang": "en"
+    },
+    {
+      "pattern": "going to end my life tonight",
+      "lang": "en"
+    },
+    {
+      "pattern": "i have decided to end my life",
+      "lang": "en"
+    },
+    {
+      "pattern": "this is my suicide note",
+      "lang": "en"
+    },
+    {
+      "pattern": "i'm going to end it tonight",
+      "lang": "en"
+    },
+    {
+      "pattern": "aaj raat khud ko maar dunga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "main suicide karne wala hu",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "ivala rathri chachipothanu",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "ఈ రోజు రాత్రి చనిపోతాను",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "आज रात आत्महत्या कर लूंगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "hang myself",
+      "lang": "en"
+    },
+    {
+      "pattern": "took all my pills",
+      "lang": "en"
+    },
+    {
+      "pattern": "took all the pills",
+      "lang": "en"
+    },
+    {
+      "pattern": "swallowed all the pills",
+      "lang": "en"
+    },
+    {
+      "pattern": "goodbye everyone, this is the end",
+      "lang": "en"
+    },
+    {
+      "pattern": "this is my last post",
+      "lang": "en"
+    },
+    {
+      "pattern": "my last message before i go",
+      "lang": "en"
+    },
+    {
+      "pattern": "tonight i will end it",
+      "lang": "en"
+    },
+    {
+      "pattern": "ending it tonight",
+      "lang": "en"
+    },
+    {
+      "pattern": "end it tonight",
+      "lang": "en"
+    },
+    {
+      "pattern": "jumping tonight",
+      "lang": "en"
+    },
+    {
+      "pattern": "aaj raat mar jaunga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "aaj raat mar jaungi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "phansi laga lunga",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "phansi laga lungi",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "goliyan kha li",
+      "lang": "hinglish"
+    },
+    {
+      "pattern": "आज रात मर जाऊंगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "फांसी लगा लूंगा",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "गोलियां खा लीं",
+      "lang": "devanagari"
+    },
+    {
+      "pattern": "ఈ రోజే చనిపోతా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ఉరి వేసుకుంటున్నా",
+      "lang": "telugu"
+    },
+    {
+      "pattern": "ivala rathri chanipotha",
+      "lang": "tenglish"
+    },
+    {
+      "pattern": "uri vesukuntunna",
+      "lang": "tenglish"
+    }
   ],
   "toxicity": [
-    {"pattern": "i will kill you", "flag": "threat"},
-    {"pattern": "i'll kill you", "flag": "threat"},
-    {"pattern": "ill kill you", "flag": "threat"},
-    {"pattern": "tujhe maar dunga", "flag": "threat"},
-    {"pattern": "tujhe jaan se maar", "flag": "threat"},
-    {"pattern": "ninnu champesta", "flag": "threat"},
-    {"pattern": "నిన్ను చంపేస్తా", "flag": "threat"},
-    {"pattern": "तुझे मार दूंगा", "flag": "threat"},
-    {"pattern": "i know where you live", "flag": "threat"},
-    {"pattern": "i will leak your", "flag": "doxxing"},
-    {"pattern": "go kill yourself", "flag": "harassment"},
-    {"pattern": "you deserve to die", "flag": "harassment"},
-    {"pattern": "nobody would miss you", "flag": "harassment"},
-    {"pattern": "tu mar ja", "flag": "harassment"},
-    {"pattern": "nuvvu chachipo", "flag": "harassment"},
-    {"pattern": "तू मर जा", "flag": "harassment"},
-    {"pattern": "send nudes", "flag": "sexual_harassment"},
-    {"pattern": "send me nudes", "flag": "sexual_harassment"},
-    {"pattern": "nudes bhej", "flag": "sexual_harassment"},
-    {"pattern": "rape you", "flag": "sexual_harassment"},
-    {"pattern": "teri maa ki", "flag": "abuse"},
-    {"pattern": "tu chutiya hai", "flag": "abuse"},
-    {"pattern": "randi", "flag": "slur"}
+    {
+      "pattern": "i will kill you",
+      "flag": "threat"
+    },
+    {
+      "pattern": "i'll kill you",
+      "flag": "threat"
+    },
+    {
+      "pattern": "ill kill you",
+      "flag": "threat"
+    },
+    {
+      "pattern": "tujhe maar dunga",
+      "flag": "threat"
+    },
+    {
+      "pattern": "tujhe jaan se maar",
+      "flag": "threat"
+    },
+    {
+      "pattern": "ninnu champesta",
+      "flag": "threat"
+    },
+    {
+      "pattern": "నిన్ను చంపేస్తా",
+      "flag": "threat"
+    },
+    {
+      "pattern": "तुझे मार दूंगा",
+      "flag": "threat"
+    },
+    {
+      "pattern": "i know where you live",
+      "flag": "threat"
+    },
+    {
+      "pattern": "i will leak your",
+      "flag": "doxxing"
+    },
+    {
+      "pattern": "go kill yourself",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "you deserve to die",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "nobody would miss you",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "tu mar ja",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "nuvvu chachipo",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "तू मर जा",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "send nudes",
+      "flag": "sexual_harassment"
+    },
+    {
+      "pattern": "send me nudes",
+      "flag": "sexual_harassment"
+    },
+    {
+      "pattern": "nudes bhej",
+      "flag": "sexual_harassment"
+    },
+    {
+      "pattern": "rape you",
+      "flag": "sexual_harassment"
+    },
+    {
+      "pattern": "teri maa ki",
+      "flag": "abuse"
+    },
+    {
+      "pattern": "tu chutiya hai",
+      "flag": "abuse"
+    },
+    {
+      "pattern": "randi",
+      "flag": "slur"
+    },
+    {
+      "pattern": "kys",
+      "flag": "harassment"
+    },
+    {
+      "pattern": "kill yourself",
+      "flag": "harassment"
+    }
   ],
-  "profanity_whitelist": ["bc", "mc", "saala", "saali", "wtf", "yaar", "fuck", "shit", "damn", "bkl"]
+  "profanity_whitelist": [
+    "bc",
+    "mc",
+    "saala",
+    "saali",
+    "wtf",
+    "yaar",
+    "fuck",
+    "shit",
+    "damn",
+    "bkl"
+  ]
 }

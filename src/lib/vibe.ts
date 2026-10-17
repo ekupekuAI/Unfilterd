@@ -152,12 +152,18 @@ export type Risk = 'none' | 'possible' | 'high';
 const RISK_ORDER: Risk[] = ['none', 'possible', 'high'];
 
 /** Same normalisation as the server and DB: NFC, apostrophes folded, no zero-width chars, lowercase. */
-function normalizeForSafety(text: string): string {
+// Punctuation folded to spaces before matching. Keep identical to vibe_normalize() in
+// supabase/migrations/20261017000000_safety_fixes.sql and normalize() in model/vibe_schema.py.
+const SAFETY_PUNCTUATION = /[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~’‘ʼ“”…–—।॥]/g;
+
+export function normalizeForSafety(text: string): string {
   return (text ?? '')
-    .normalize('NFC')
+    .normalize('NFKC')
     .replace(/[​‌‍﻿]/g, '')
-    .replace(/[’‘ʼ]/g, "'")
-    .toLowerCase();
+    .toLowerCase()
+    .replace(SAFETY_PUNCTUATION, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 const CRISIS_PATTERNS = safetyPatterns.crisis.map(row => normalizeForSafety(row.pattern));
@@ -180,10 +186,14 @@ export function detectCrisisLocally(text: string): boolean {
   return applyRiskFloor(text, 'none') !== 'none';
 }
 
+const SERIOUS_TOXICITY = new Set(['threat', 'doxxing', 'harassment', 'sexual_harassment']);
+const SEVERITY_ORDER: VibeToxicity['severity'][] = ['low', 'medium', 'high'];
+
 /** Whole-word match, so "gay" doesn't fire inside Hinglish "gaya" or "mad" inside "made". */
 function hasWord(lowerText: string, keyword: string): boolean {
   const kw = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(?<![\\p{L}\\p{N}])${kw}(?![\\p{L}\\p{N}])`, 'u').test(lowerText);
+  // no lookbehind: Safari before 16.4 cannot parse it, and this regex is built at runtime
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${kw}(?=$|[^\\p{L}\\p{N}])`, 'u').test(lowerText);
 }
 
 /** Keyword fallback used when the model server is unreachable or not configured. */
@@ -225,7 +235,8 @@ export function analyzeVibeLocally(text: string): VibeAnalysis {
     crisis_resources: is_crisis ? CRISIS_RESOURCES : [],
     toxicity: {
       isToxic: flags.length > 0,
-      severity: flags.length >= 3 ? 'high' : flags.length === 2 ? 'medium' : 'low',
+      // threats and harassment go to review (medium); other matches are low
+      severity: flags.some(flag => SERIOUS_TOXICITY.has(flag)) ? 'medium' : 'low',
       flags,
     },
     source: 'local',
@@ -250,7 +261,15 @@ function normalizeAnalysis(raw: unknown, text: string): VibeAnalysis {
   const modelRisk: Risk = RISK_ORDER.includes(data.risk as Risk) ? (data.risk as Risk) : 'none';
   const risk = applyRiskFloor(text, data.is_crisis && modelRisk === 'none' ? 'possible' : modelRisk);
   const is_crisis = risk !== 'none';
-  const toxicity = data.toxicity && typeof data.toxicity === 'object' ? { ...local.toxicity, ...data.toxicity } : local.toxicity;
+  // the model can raise toxicity but never lower what the local patterns found
+  const remote = data.toxicity && typeof data.toxicity === 'object' ? data.toxicity : null;
+  const toxicity: VibeToxicity = remote
+    ? {
+        isToxic: Boolean(remote.isToxic) || local.toxicity.isToxic,
+        severity: SEVERITY_ORDER[Math.max(SEVERITY_ORDER.indexOf(remote.severity), SEVERITY_ORDER.indexOf(local.toxicity.severity), 0)],
+        flags: [...new Set([...(Array.isArray(remote.flags) ? remote.flags : []), ...local.toxicity.flags])],
+      }
+    : local.toxicity;
   const lang_style = LANG_STYLES.includes(data.lang_style as LangStyle) ? (data.lang_style as LangStyle) : local.lang_style;
 
   return {
@@ -266,6 +285,18 @@ function normalizeAnalysis(raw: unknown, text: string): VibeAnalysis {
   };
 }
 
+/** The local analysis must never stop someone from posting; the database floors risk again. */
+function safeLocal(text: string): VibeAnalysis {
+  try {
+    return analyzeVibeLocally(text);
+  } catch {
+    return {
+      mood: 'random', vibe_tags: [], intensity: 0, is_crisis: false, risk: 'none', lang_style: 'en',
+      crisis_resources: [], toxicity: { isToxic: false, severity: 'low', flags: [] }, source: 'local',
+    };
+  }
+}
+
 /**
  * Analyze a post with Unfilterd Vibe (our own model, no API key). Never throws and
  * never blocks posting: on a missing URL, network error, bad response or a reply
@@ -274,9 +305,9 @@ function normalizeAnalysis(raw: unknown, text: string): VibeAnalysis {
  */
 export async function analyzeVibe(text: string, timeoutMs = 3000): Promise<VibeAnalysis> {
   const trimmed = text.trim();
-  if (!trimmed) return analyzeVibeLocally('');
+  if (!trimmed) return safeLocal('');
   const apiUrl = (import.meta.env.VITE_VIBE_API_URL ?? '').replace(/\/+$/, '');
-  if (!apiUrl) return analyzeVibeLocally(trimmed);
+  if (!apiUrl) return safeLocal(trimmed);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -287,10 +318,10 @@ export async function analyzeVibe(text: string, timeoutMs = 3000): Promise<VibeA
       body: JSON.stringify({ text: trimmed }),
       signal: controller.signal,
     });
-    if (!res.ok) return analyzeVibeLocally(trimmed);
+    if (!res.ok) return safeLocal(trimmed);
     return normalizeAnalysis(await res.json(), trimmed);
   } catch {
-    return analyzeVibeLocally(trimmed);
+    return safeLocal(trimmed);
   } finally {
     clearTimeout(timer);
   }

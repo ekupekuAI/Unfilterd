@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from vibe_schema import (
+    normalize,
     MOODS,
     TAGS,
     RISK_LEVELS,
@@ -101,3 +102,21 @@ def test_floor_risk_never_lowers(text):
 
 def test_floor_risk_keeps_possible_when_no_match():
     assert floor_risk("totally fine text", "possible") == "possible"
+
+
+@pytest.mark.parametrize("text", ["i want to\ndie", "i want  to   die", "I WANT TO DIE!!!", "ＫＩＬＬ ＭＹＳＥＬＦ", "selfharm again"])
+def test_normalisation_collapses_spacing_punctuation_and_width(text):
+    assert floor_risk(text, "none") != "none"
+
+
+def test_widened_list_and_explicit_tier():
+    assert floor_risk("mujhe marna hai", "none") == "possible"
+    assert floor_risk("I will kill myself tonight", "none") == "high"
+    assert floor_risk("if I fail again I'm literally going to kill myself lol", "none") == "possible"
+    assert floor_risk("this assignment is killing me lol", "none") == "none"
+
+
+def test_normalisation_parity_cases():
+    cases = json.loads((Path(__file__).resolve().parents[1] / "shared" / "normalize_cases.json").read_text(encoding="utf-8"))
+    for raw, expected in cases:
+        assert normalize(raw) == expected, raw

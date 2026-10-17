@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import unicodedata
 from functools import lru_cache
 from pathlib import Path
@@ -34,17 +35,15 @@ PATTERNS_PATH = Path(
 )
 
 _ZERO_WIDTH = dict.fromkeys(map(ord, "​‌‍﻿"))
-_APOSTROPHES = str.maketrans({"’": "'", "‘": "'", "ʼ": "'"})
+# Keep identical to vibe_normalize() (SQL) and normalizeForSafety() (src/lib/vibe.ts).
+_PUNCTUATION = dict.fromkeys(map(ord, "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~’‘ʼ“”…–—।॥"), " ")
+_SPACES = re.compile(r"\s+")
 
 
 def normalize(text: str) -> str:
-    """NFC, lowercase, fold curly apostrophes, drop zero-width characters."""
-    return (
-        unicodedata.normalize("NFC", text or "")
-        .translate(_ZERO_WIDTH)
-        .translate(_APOSTROPHES)
-        .lower()
-    )
+    """NFKC, no zero-width characters, lowercase, punctuation to spaces, whitespace collapsed."""
+    text = unicodedata.normalize("NFKC", text or "").translate(_ZERO_WIDTH).lower().translate(_PUNCTUATION)
+    return _SPACES.sub(" ", text).strip()
 
 
 @lru_cache(maxsize=1)

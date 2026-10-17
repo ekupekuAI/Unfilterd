@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { HeartHandshake, Phone, Wind, X } from 'lucide-react';
@@ -27,6 +27,9 @@ export function CheckInHost() {
   const [checkIn, setCheckIn] = useState<CheckIn | null>(null);
   const [answer, setAnswer] = useState<Answer | null>(null);
   const reduceMotion = useReducedMotion();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -45,9 +48,23 @@ export function CheckInHost() {
 
   useEffect(() => {
     void load();
+    const onVisible = () => { if (document.visibilityState === 'visible') void load(); };
     window.addEventListener(CHECKIN_EVENT, load);
-    return () => window.removeEventListener(CHECKIN_EVENT, load);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener(CHECKIN_EVENT, load);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [load]);
+
+  // keyboard and screen-reader users: focus moves in, Tab stays inside, focus returns on close
+  const openId = checkIn?.id;
+  useEffect(() => {
+    if (!openId) return;
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    headingRef.current?.focus();
+    return () => returnFocusRef.current?.focus?.();
+  }, [openId]);
 
   if (!checkIn) return null;
   const copy = getCheckInCopy(checkIn.lang_style);
@@ -58,6 +75,26 @@ export function CheckInHost() {
     await supabase.from('vibe_checkins')
       .update({ status: choice, answered_at: new Date().toISOString() })
       .eq('id', checkIn.id);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      void dismiss();
+      return;
+    }
+    if (event.key !== 'Tab' || !panelRef.current) return;
+    const focusable = Array.from(panelRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
 
   const dismiss = async () => {
@@ -78,8 +115,10 @@ export function CheckInHost() {
         className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 px-4 pb-6 sm:pb-0"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         role="dialog" aria-modal="true" aria-labelledby="checkin-title"
+        onKeyDown={onKeyDown}
       >
         <motion.div
+          ref={panelRef}
           className="w-full max-w-md rounded-3xl border border-white/10 bg-gradient-to-b from-[#1A1530] to-[#0E0B1C] p-6 shadow-2xl"
           initial={reduceMotion ? false : { y: 40, scale: 0.97 }}
           animate={{ y: 0, scale: 1 }}
@@ -88,7 +127,7 @@ export function CheckInHost() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 text-secondary">
               <HeartHandshake className="w-5 h-5" />
-              <h2 id="checkin-title" className="font-display text-xl text-white">
+              <h2 id="checkin-title" ref={headingRef} tabIndex={-1} className="font-display text-xl text-white outline-none">
                 {checkIn.risk === 'high' ? copy.highTitle : copy.title}
               </h2>
             </div>

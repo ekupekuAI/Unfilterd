@@ -222,7 +222,9 @@ export function PostCard({ post, onLikeToggle, onSaveToggle, onDeleted, compact 
           </div>
         </div>
 
-        <MediaGallery post={post} />
+        <SensitiveCover active={Boolean(post.is_sensitive) && user?.id !== post.user_id}>
+          <MediaGallery post={post} />
+        </SensitiveCover>
 
         <div className="flex items-center gap-5 mt-4 pt-3 border-t border-white/5">
           <button

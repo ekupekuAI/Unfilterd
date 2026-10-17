@@ -1,12 +1,16 @@
 // Regenerates the safety-pattern INSERT block inside the vibe-model migration from
 // shared/safety_patterns.json, so the database applies exactly the same list as the
 // model server and the app. Usage: node scripts/gen-pattern-sql.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
-const migration = join(repo, 'supabase', 'migrations', '20261016000000_add_vibe_model.sql');
+// Writes into the NEWEST migration that has the markers, so every list change ships as
+// a new migration that the live database actually runs. Older migrations are not touched.
+const dir = join(repo, 'supabase', 'migrations');
+const migration = join(dir, readdirSync(dir).filter(f => f.endsWith('.sql')).sort().reverse()
+  .find(f => readFileSync(join(dir, f), 'utf8').includes('-- BEGIN GENERATED PATTERNS')));
 const shared = JSON.parse(readFileSync(join(repo, 'shared', 'safety_patterns.json'), 'utf8'));
 
 const quote = s => `'${s.replace(/'/g, "''")}'`;

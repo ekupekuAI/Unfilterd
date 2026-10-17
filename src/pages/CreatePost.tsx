@@ -48,6 +48,8 @@ export function CreatePostPage() {
   const [vibe, setVibe] = useState<VibeAnalysis | null>(null);
   const [vibeText, setVibeText] = useState('');
   const [vibeTags, setVibeTags] = useState<VibeTag[]>([]);
+  // tags the author removed stay removed, even if the post is re-read after an edit
+  const [removedTags, setRemovedTags] = useState<VibeTag[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [wantsMatch, setWantsMatch] = useState(true);
   const [showAllTags, setShowAllTags] = useState(false);
@@ -192,84 +194,93 @@ export function CreatePostPage() {
     setAnalyzing(false);
     setVibe(result);
     setVibeText(currentText);
-    setVibeTags(result.vibe_tags);
+    setVibeTags(result.vibe_tags.filter(tag => !removedTags.includes(tag)));
     if (result.mood !== 'random') setMood(result.mood);
     setCrisisResources(result.crisis_resources);
     return result;
   };
 
   const toggleTag = (tag: VibeTag) => {
-    setVibeTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag].slice(0, 5));
+    const removing = vibeTags.includes(tag);
+    setVibeTags(prev => removing ? prev.filter(t => t !== tag) : [...prev, tag].slice(0, 5));
+    setRemovedTags(prev => removing ? [...new Set([...prev, tag])] : prev.filter(t => t !== tag));
   };
 
   const handlePublish = async () => {
     if (!user || !title.trim() || !content.trim()) return;
     setPublishError('');
     setSubmitting(true);
-    const analysis = await readVibe();
-    const aiSeverity = analysis.toxicity.isToxic ? analysis.toxicity.severity : undefined;
-    // Removed chips stay removed (an empty list is a valid choice); the DB falls back to mood for matching.
-    const chipsReviewed = Boolean(vibe) && vibeText === currentText;
-    const tags = chipsReviewed ? vibeTags : analysis.vibe_tags;
-    const finalMood = mood === 'random' && analysis.mood !== 'random' ? analysis.mood : mood;
-    const matchRequested = wantsMatch && !analysis.is_crisis && profile?.open_to_matching !== false;
-    const vibeFields = {
-      vibe_tags: tags,
-      vibe_intensity: analysis.intensity,
-      is_crisis: analysis.is_crisis,
-      risk_level: analysis.risk,
-      toxicity_severity: aiSeverity ?? 'none',
-      wants_match: matchRequested,
-    };
-    if (aiSeverity === 'high' && !showHighSeverityConfirm) {
-      setSubmitting(false);
-      setShowHighSeverityConfirm(true);
-      setPublishError('This reads like it targets someone. If you publish, it stays hidden until a moderator reviews it. Edit it, or press publish again to send it for review.');
-      return;
-    }
-    const request = editingPostId
-      ? supabase.from('posts').update({ mood: finalMood, title: title.trim(), content: content.trim(), ...vibeFields }).eq('id', editingPostId).select('id').maybeSingle()
-      : supabase.from('posts').insert({ user_id: user.id, mood: finalMood, title: title.trim(), content: content.trim(), ...vibeFields }).select('id').maybeSingle();
-    const { data, error } = await request;
-    setSubmitting(false);
-    if (error) {
-      setPublishError(error.message);
-      return;
-    }
-    if (data?.id) {
-      try {
-        await uploadMedia(data.id);
-      } catch (mediaError) {
-        setPublishError(mediaError instanceof Error ? mediaError.message : 'Media upload failed.');
+    try {
+      const analysis = await readVibe();
+      const aiSeverity = analysis.toxicity.isToxic ? analysis.toxicity.severity : undefined;
+      // Removed chips stay removed (an empty list is a valid choice); the DB falls back to mood for matching.
+      const chipsReviewed = Boolean(vibe) && vibeText === currentText;
+      const tags = chipsReviewed ? vibeTags : analysis.vibe_tags.filter(tag => !removedTags.includes(tag));
+      const finalMood = mood === 'random' && analysis.mood !== 'random' ? analysis.mood : mood;
+      const matchRequested = wantsMatch && !analysis.is_crisis && profile?.open_to_matching !== false;
+      const vibeFields = {
+        vibe_tags: tags,
+        vibe_intensity: analysis.intensity,
+        is_crisis: analysis.is_crisis,
+        risk_level: analysis.risk,
+        toxicity_severity: aiSeverity ?? 'none',
+        wants_match: matchRequested,
+      };
+      if (aiSeverity === 'high' && !showHighSeverityConfirm) {
         setSubmitting(false);
+        setShowHighSeverityConfirm(true);
+        setPublishError('This reads like it targets someone. If you publish, it stays hidden until a moderator reviews it. Edit it, or press publish again to send it for review.');
         return;
       }
-    }
-    localStorage.removeItem(draftKey);
-    if (!data) return;
-    if (vibe && chipsReviewed && !editingPostId) {
-      const removed = vibe.vibe_tags.filter(tag => !tags.includes(tag));
-      const added = tags.filter(tag => !vibe.vibe_tags.includes(tag));
-      if (removed.length || added.length) {
-        // anonymous: no user id, no post text
-        void supabase.from('vibe_feedback').insert({
-          predicted_tags: vibe.vibe_tags,
-          corrected_tags: tags,
-          lang_style: analysis.lang_style,
-          length_bucket: currentText.length < 80 ? 'short' : currentText.length < 300 ? 'medium' : 'long',
-        });
+      const request = editingPostId
+        ? supabase.from('posts').update({ mood: finalMood, title: title.trim(), content: content.trim(), ...vibeFields }).eq('id', editingPostId).select('id').maybeSingle()
+        : supabase.from('posts').insert({ user_id: user.id, mood: finalMood, title: title.trim(), content: content.trim(), ...vibeFields }).select('id').maybeSingle();
+      const { data, error } = await request;
+      setSubmitting(false);
+      if (error) {
+        setPublishError(error.message);
+        return;
       }
-    }
-    if (analysis.risk !== 'none' && !editingPostId) {
-      await supabase.from('vibe_checkins').update({ lang_style: analysis.lang_style }).eq('post_id', data.id);
-      window.dispatchEvent(new Event(CHECKIN_EVENT));
-      navigate(`/post/${data.id}`, { replace: true });
-      return;
-    }
-    if (matchRequested && !editingPostId) {
-      navigate(`/matches?find=${data.id}`, { replace: true });
-    } else {
-      navigate(`/post/${data.id}`, { replace: true });
+      if (data?.id) {
+        try {
+          await uploadMedia(data.id);
+        } catch (mediaError) {
+          setPublishError(mediaError instanceof Error ? mediaError.message : 'Media upload failed.');
+          setSubmitting(false);
+          return;
+        }
+      }
+      localStorage.removeItem(draftKey);
+      if (!data) return;
+      if (vibe && chipsReviewed && !editingPostId) {
+        const removed = vibe.vibe_tags.filter(tag => !tags.includes(tag));
+        const added = tags.filter(tag => !vibe.vibe_tags.includes(tag));
+        if (removed.length || added.length) {
+          // anonymous: no user id, no post text
+          void supabase.from('vibe_feedback').insert({
+            predicted_tags: vibe.vibe_tags,
+            corrected_tags: tags,
+            lang_style: analysis.lang_style,
+            length_bucket: currentText.length < 80 ? 'short' : currentText.length < 300 ? 'medium' : 'long',
+          });
+        }
+      }
+      if (analysis.risk !== 'none' && !editingPostId) {
+        await supabase.from('vibe_checkins').update({ lang_style: analysis.lang_style }).eq('post_id', data.id);
+        window.dispatchEvent(new Event(CHECKIN_EVENT));
+        navigate(`/post/${data.id}`, { replace: true });
+        return;
+      }
+      if (matchRequested && !editingPostId) {
+        navigate(`/matches?find=${data.id}`, { replace: true });
+      } else {
+        navigate(`/post/${data.id}`, { replace: true });
+      }
+  
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : 'Something went wrong. Your text is still here, please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
